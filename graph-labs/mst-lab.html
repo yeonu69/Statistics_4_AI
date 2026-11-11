@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>최소신장 트리 실험실</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: sketchbook lab bench — graph board left, step notebook right; stacks on phones */
+:root{
+  --paper:#FAF7EF; --card:#FFFFFF; --ink:#1E2733; --muted:#5B6675; --line:#C9D1DA;
+  --blue:#2E6FB0; --blue-soft:#D6E7F7; --orange:#E07A2E; --orange-ink:#A84E12; --orange-soft:#FBE4CF;
+  --red:#C0392B; --red-soft:#F8DDD9; --green:#2F7D4F; --green-soft:#DCEFE3;
+  --f-display:'Gaegu','Comic Sans MS',cursive; --f-body:'Noto Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#161C24; --card:#1F2731; --ink:#EEF1F4; --muted:#9AA6B4; --line:#3D4856;
+  --blue:#7DB6EA; --blue-soft:#1E3A55; --orange:#F2A65A; --orange-ink:#F6B97A; --orange-soft:#4A2E14;
+  --red:#F08A7E; --red-soft:#4A2320; --green:#7FCB9C; --green-soft:#1E3A2A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#161C24; --card:#1F2731; --ink:#EEF1F4; --muted:#9AA6B4; --line:#3D4856;
+  --blue:#7DB6EA; --blue-soft:#1E3A55; --orange:#F2A65A; --orange-ink:#F6B97A; --orange-soft:#4A2E14;
+  --red:#F08A7E; --red-soft:#4A2320; --green:#7FCB9C; --green-soft:#1E3A2A; color-scheme:dark}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-size:2.4rem;line-height:1;margin:0;text-wrap:balance}
+.sub{margin:4px 0 0;color:var(--muted)}
+.tabs{display:flex;gap:6px;background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:4px}
+.tabs button{border:0;background:transparent;color:var(--ink);font:inherit;font-weight:700;padding:8px 16px;border-radius:999px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.board,.note{background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:14px;min-width:0}
+svg{width:100%;height:auto;display:block;touch-action:manipulation}
+.e{stroke:var(--line);stroke-width:3;stroke-linecap:round;transition:stroke .25s,stroke-width .25s,opacity .25s}
+.e.cand{stroke:var(--blue);stroke-width:4;stroke-dasharray:10 8}
+.e.tree{stroke:var(--orange);stroke-width:10}
+.e.spt{stroke:var(--blue);stroke-width:10}
+.e.sptt{stroke:var(--blue);stroke-width:5;stroke-dasharray:6 7}
+.e.rej{stroke:var(--red);stroke-width:4;stroke-dasharray:4 8;opacity:.75}
+.e.cur{stroke-width:12}
+.e.cur:not(.tree):not(.rej){stroke:var(--ink)}
+.e.pick{animation:glow 1s ease-in-out 2}
+@keyframes glow{50%{stroke-width:16}}
+.hit{stroke:transparent;stroke-width:30;cursor:default}
+.predict .hit.can{cursor:pointer}
+.wb rect{fill:var(--card);stroke:var(--line);stroke-width:2}
+.wb text{fill:var(--ink);font:700 26px var(--f-body);text-anchor:middle;dominant-baseline:central}
+.wb.hl rect{fill:var(--orange-soft);stroke:var(--orange)}
+.editing .wb{cursor:pointer}
+.editing .wb rect{stroke:var(--blue);stroke-dasharray:4 3}
+.n circle{fill:var(--card);stroke:var(--ink);stroke-width:3;transition:fill .25s,stroke .25s}
+.n text{fill:var(--ink);font:700 30px var(--f-body);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.n.in circle{fill:var(--blue-soft);stroke:var(--blue)}
+.n.cur circle{stroke:var(--orange);stroke-width:6}
+.n .ring{fill:none;stroke:var(--orange);stroke-width:3;stroke-dasharray:5 5;opacity:0}
+.n.start .ring{opacity:1}
+.predict .n.can{cursor:pointer}
+.db text{font:700 22px var(--f-body);text-anchor:middle;dominant-baseline:central;fill:var(--blue)}
+.db rect{fill:var(--card);stroke:var(--blue);stroke-width:1.5}
+.db.fin text{fill:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.82rem;color:var(--muted);padding:6px 4px 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:22px;height:0;border-top:5px solid var(--orange);border-radius:3px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{font:inherit;font-weight:700;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;padding:8px 12px;cursor:pointer;min-height:40px}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn[aria-pressed="true"]{background:var(--orange-soft);border-color:var(--orange);color:var(--orange-ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:focus-visible,.tabs button:focus-visible,select:focus-visible,.dot:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+select{font:inherit;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;padding:8px 10px;min-height:40px}
+label.sel{display:inline-flex;align-items:center;gap:6px;font-size:.88rem;color:var(--muted)}
+.row2{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;padding-top:10px;border-top:1.5px dashed var(--line)}
+.stephead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.stepno{font-family:var(--f-display);font-size:1.9rem;font-weight:700;line-height:1}
+.stepno small{font-size:1.1rem;color:var(--muted);font-weight:400}
+.tag{font-size:.78rem;font-weight:700;letter-spacing:.04em;color:var(--orange-ink);background:var(--orange-soft);border-radius:999px;padding:3px 10px}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.dot{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);background:var(--paper);color:var(--muted);font:700 .75rem var(--f-body);cursor:pointer;font-variant-numeric:tabular-nums}
+.dot.past{background:var(--blue-soft);border-color:var(--blue);color:var(--ink)}
+.dot.now{background:var(--orange);border-color:var(--orange);color:#1E2733}
+.msg{background:var(--paper);border-radius:12px;padding:12px 14px;font-size:1rem;max-width:65ch}
+.fb{border-radius:12px;padding:10px 14px;font-weight:500}
+.fb.ok{background:var(--green-soft);color:var(--green)}
+.fb.bad{background:var(--red-soft);color:var(--red)}
+h3{font-size:.8rem;letter-spacing:.06em;color:var(--muted);margin:16px 0 8px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--line);border-radius:10px;padding:4px 10px;font-variant-numeric:tabular-nums;font-size:.92rem;background:var(--card)}
+.chip.pick{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-ink);font-weight:700}
+.chip.ok{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-ink)}
+.chip.no{border-color:var(--red);color:var(--red);text-decoration:line-through}
+.chip.curk{outline:3px solid var(--ink);outline-offset:1px}
+.chip.wait{color:var(--muted)}
+.chip.grp{border-color:var(--blue);background:var(--blue-soft)}
+.kv{display:flex;flex-wrap:wrap;gap:8px 20px;font-variant-numeric:tabular-nums}
+.kv b{font-size:1.25rem}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-size:.92rem}
+th{color:var(--muted);font-weight:700;font-size:.8rem}
+tr.curr td{background:var(--orange-soft)}
+.st-fin{color:var(--blue);font-weight:700}
+.done{margin-top:14px;border:2px solid var(--orange);border-radius:14px;padding:12px 14px;background:var(--orange-soft)}
+.done p{margin:0}
+.big{font-family:var(--f-display);font-size:1.6rem;font-weight:700;color:var(--orange-ink)}
+.tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.tips{grid-template-columns:minmax(0,1fr)}}
+.tip{border-top:3px solid var(--line);padding-top:8px;color:var(--muted);font-size:.9rem}
+.tip b{color:var(--ink);display:block;font-size:.95rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>최소신장 트리 실험실</h1>
+      <p class="sub">같은 그래프에서 프림·크루스칼·다익스트라를 한 단계씩 돌려 보세요.</p>
+    </div>
+    <div class="tabs" role="group" aria-label="알고리즘 선택">
+      <button id="t-prim" data-a="prim" aria-pressed="true">프림</button>
+      <button id="t-kruskal" data-a="kruskal" aria-pressed="false">크루스칼</button>
+      <button id="t-dijk" data-a="dijk" aria-pressed="false">다익스트라</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="board" aria-label="그래프">
+      <svg id="g" viewBox="0 0 700 615" role="img" aria-label="정점 6개, 간선 11개 가중치 그래프"></svg>
+      <div class="legend" id="legend"></div>
+      <div class="controls">
+        <button class="btn" id="b-first" aria-label="처음으로">⏮ 처음</button>
+        <button class="btn" id="b-prev" aria-label="이전 단계">◀ 이전</button>
+        <button class="btn primary" id="b-next" aria-label="다음 단계">다음 ▶</button>
+        <button class="btn" id="b-play" aria-pressed="false">자동 재생</button>
+        <label class="sel" for="speed">속도
+          <select id="speed"><option value="1800">느리게</option><option value="1100" selected>보통</option><option value="600">빠르게</option></select>
+        </label>
+      </div>
+      <div class="row2">
+        <label class="sel" for="start" id="startwrap">시작 정점
+          <select id="start"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+        </label>
+        <button class="btn" id="b-predict" aria-pressed="false">예측 모드</button>
+        <button class="btn" id="b-edit" aria-pressed="false">가중치 편집</button>
+        <button class="btn" id="b-rand">가중치 무작위</button>
+        <button class="btn" id="b-reset">기본 예제</button>
+      </div>
+    </section>
+
+    <section class="note" aria-live="polite">
+      <div class="stephead"><div class="stepno" id="stepno"></div><span class="tag" id="tag"></span></div>
+      <div class="dots" id="dots"></div>
+      <div id="fb"></div>
+      <p class="msg" id="msg"></p>
+      <div id="detail"></div>
+    </section>
+  </div>
+
+  <div class="tips">
+    <div class="tip"><b>예측 모드</b>프림은 다음에 고를 간선을, 다익스트라는 다음에 확정할 정점을 그래프에서 눌러 맞혀 보세요. 크루스칼은 채택·제외를 고릅니다.</div>
+    <div class="tip"><b>가중치 편집</b>켜고 간선의 숫자를 누르면 1씩 커집니다(9 다음은 1). 값이 바뀌면 처음부터 다시 계산합니다.</div>
+    <div class="tip"><b>확인해 볼 것</b>시작 정점을 바꿔도 프림의 총비용은 같을까요? 다익스트라 트리의 간선 합은 MST보다 클까요?</div>
+  </div>
+</div>
+
+<script>
+(function(){
+const NS='http://www.w3.org/2000/svg';
+const POS={1:[350,70],2:[100,230],3:[600,230],4:[180,520],5:[520,520],6:[350,300]};
+const LBL={'1-2':[212,128],'1-3':[490,128],'1-4':[212,322],'1-6':[384,182],'2-3':[462,206],'2-4':[104,380],'3-5':[598,380],'3-6':[484,298],'4-5':[350,560],'4-6':[300,424],'5-6':[470,396]};
+const DB={1:[430,62],2:[44,170],3:[656,170],4:[180,588],5:[520,588],6:[350,364]};
+const DEF=[[1,2,2],[1,3,1],[1,4,4],[1,6,1],[2,3,2],[2,4,3],[3,5,5],[3,6,3],[4,5,6],[4,6,5],[5,6,4]];
+const NODES=[1,2,3,4,5,6];
+let W=DEF.map(e=>e[2]);
+const key=(a,b)=>a<b?a+'-'+b:b+'-'+a;
+const edges=()=>DEF.map((e,i)=>({u:e[0],v:e[1],w:W[i],k:key(e[0],e[1]),i}));
+const cmp=(a,b)=>a.w-b.w||a.u-b.u||a.v-b.v;
+const fmt=x=>x===Infinity?'∞':x;
+const ek=k=>{const [a,b]=k.split('-');return '('+a+','+b+')';};
+const wOf=k=>edges().find(e=>e.k===k).w;
+
+function prim(s){
+  const E=edges(),U=new Set([s]),T=[];let tot=0;
+  const st=[{U:[s],T:[],cand:[],pick:null,tot:0,msg:'정점 '+s+'에서 출발합니다. 지금 영토는 U = {'+s+'} 하나뿐입니다.'}];
+  while(U.size<NODES.length){
+    const cand=E.filter(e=>U.has(e.u)!==U.has(e.v)).sort(cmp); if(!cand.length)break;
+    const p=cand[0], nv=U.has(p.u)?p.v:p.u, ties=cand.filter(e=>e.w===p.w).length;
+    T.push(p.k);U.add(nv);tot+=p.w;
+    st.push({U:[...U],T:[...T],cand:cand.map(e=>e.k),candE:cand,pick:p.k,nv,tot,
+      msg:'U와 바깥을 잇는 후보 '+cand.length+'개 중 가장 싼 간선은 ('+p.u+','+p.v+') = '+p.w+'. 정점 '+nv+'를 U에 넣습니다.'+(ties>1?' 같은 비용의 후보가 '+ties+'개라 그중 하나를 골랐습니다.':'')});
+  }
+  st[st.length-1].done=true;return st;
+}
+function kruskal(){
+  const E=edges().sort(cmp),par={};NODES.forEach(n=>par[n]=n);
+  const f=x=>par[x]===x?x:(par[x]=f(par[x]));
+  const groups=()=>{const g={};NODES.forEach(n=>{const r=f(n);(g[r]=g[r]||[]).push(n)});return Object.values(g);};
+  const status={},T=[];let tot=0;
+  const st=[{EE:E,status:{},T:[],tot:0,cur:null,groups:groups(),msg:'간선 '+E.length+'개를 비용 순으로 줄 세웠습니다. 싼 것부터 하나씩 검사합니다.'}];
+  for(const e of E){
+    if(T.length===NODES.length-1)break;
+    const a=f(e.u),b=f(e.v);let msg;
+    if(a!==b){par[a]=b;T.push(e.k);tot+=e.w;status[e.k]='ok';msg='('+e.u+','+e.v+') = '+e.w+': 정점 '+e.u+'와 '+e.v+'는 서로 다른 무리라서 채택합니다.';}
+    else{status[e.k]='no';msg='('+e.u+','+e.v+') = '+e.w+': 정점 '+e.u+'와 '+e.v+'는 이미 같은 무리라 넣으면 사이클이 생깁니다. 제외합니다.';}
+    if(T.length===NODES.length-1)msg+=' 간선이 '+T.length+'개가 되어 종료합니다.';
+    st.push({EE:E,status:{...status},T:[...T],tot,cur:e.k,dec:status[e.k],groups:groups(),msg});
+  }
+  st[st.length-1].done=true;return st;
+}
+function dijkstra(s){
+  const E=edges(),adj={};NODES.forEach(n=>adj[n]=[]);
+  E.forEach(e=>{adj[e.u].push([e.v,e.w,e.k]);adj[e.v].push([e.u,e.w,e.k]);});
+  const d={},pv={},vis=new Set();NODES.forEach(n=>{d[n]=Infinity;pv[n]=null;});d[s]=0;
+  const snap=x=>Object.assign({d:{...d},pv:{...pv},vis:[...vis]},x);
+  const st=[snap({cur:null,upd:[],msg:'출발점 '+s+'의 거리는 0, 나머지는 아직 ∞입니다.'})];
+  while(vis.size<NODES.length){
+    let c=null;NODES.forEach(n=>{if(!vis.has(n)&&d[n]<Infinity&&(c===null||d[n]<d[c]))c=n;});
+    if(c===null)break;vis.add(c);const upd=[];
+    adj[c].forEach(([v,w,k])=>{if(!vis.has(v)&&d[c]+w<d[v]){upd.push({v,old:d[v],nw:d[c]+w});d[v]=d[c]+w;pv[v]=[c,k];}});
+    st.push(snap({cur:c,upd,msg:'확정되지 않은 정점 중 거리가 가장 짧은 '+c+'(거리 '+d[c]+')를 확정합니다. '+(upd.length?'이웃 거리 갱신: '+upd.map(u=>u.v+'번 '+fmt(u.old)+' → '+u.nw).join(', ')+'.':'갱신할 이웃이 없습니다.')}));
+  }
+  st[st.length-1].done=true;return st;
+}
+const mstTotal=()=>{const k=kruskal();return k[k.length-1].tot;};
+
+const S={algo:'prim',start:1,steps:[],i:0,predict:false,edit:false,timer:null,fb:null};
+const $=id=>document.getElementById(id);
+const svg=$('g');
+
+function el(tag,attrs,parent){const n=document.createElementNS(NS,tag);for(const a in attrs)n.setAttribute(a,attrs[a]);if(parent)parent.appendChild(n);return n;}
+function build(){
+  svg.innerHTML='';
+  const ge=el('g',{},svg),gh=el('g',{},svg),gw=el('g',{},svg),gn=el('g',{},svg),gd=el('g',{},svg);
+  DEF.forEach(([u,v])=>{const k=key(u,v),[x1,y1]=POS[u],[x2,y2]=POS[v];
+    el('line',{x1,y1,x2,y2,class:'e',id:'e'+k},ge);
+    const h=el('line',{x1,y1,x2,y2,class:'hit',id:'h'+k},gh);h.addEventListener('click',()=>clickEdge(k));
+    const [lx,ly]=LBL[k],g=el('g',{class:'wb',id:'w'+k},gw);
+    el('rect',{x:lx-20,y:ly-19,width:40,height:38,rx:10},g);
+    const t=el('text',{x:lx,y:ly},g);t.textContent='';
+    g.addEventListener('click',()=>clickWeight(k));
+  });
+  NODES.forEach(n=>{const [x,y]=POS[n],g=el('g',{class:'n',id:'n'+n},gn);
+    el('circle',{cx:x,cy:y,r:44,class:'ring'},g);el('circle',{cx:x,cy:y,r:34},g);
+    const t=el('text',{x,y},g);t.textContent=n;g.addEventListener('click',()=>clickNode(n));
+    const b=el('g',{class:'db',id:'d'+n},gd);el('rect',{x:DB[n][0]-38,y:DB[n][1]-17,width:76,height:34,rx:8},b);el('text',{x:DB[n][0],y:DB[n][1]},b);
+  });
+}
+function compute(){
+  S.steps=S.algo==='prim'?prim(S.start):S.algo==='kruskal'?kruskal():dijkstra(S.start);
+  S.i=0;S.fb=null;
+}
+function setCls(id,c){const n=$(id);if(n)n.setAttribute('class',c);}
+
+function render(){
+  const st=S.steps[S.i],n=S.steps.length-1,E=edges();
+  svg.classList.toggle('predict',S.predict);svg.classList.toggle('editing',S.edit);
+  E.forEach(e=>{$('w'+e.k).querySelector('text').textContent=e.w;});
+  const ec={},nc={},hl=new Set();NODES.forEach(x=>nc[x]='n');E.forEach(e=>ec[e.k]='e');
+  NODES.forEach(x=>$('d'+x).style.display='none');
+  if(S.algo==='prim'){
+    st.cand.forEach(k=>{if(!st.T.includes(k))ec[k]+=' cand';});
+    st.T.forEach(k=>ec[k]+=' tree');
+    if(st.pick){ec[st.pick]+=' pick';hl.add(st.pick);}
+    st.U.forEach(x=>nc[x]+=' in');if(st.nv)nc[st.nv]+=' cur';nc[S.start]+=' start';
+  }else if(S.algo==='kruskal'){
+    for(const k in st.status)ec[k]+=st.status[k]==='ok'?' tree':' rej';
+    if(st.cur){ec[st.cur]+=' cur';hl.add(st.cur);st.cur.split('-').forEach(x=>nc[x]+=' cur');}
+    st.groups.forEach(g=>{if(g.length>1)g.forEach(x=>nc[x]+=' in');});
+  }else{
+    NODES.forEach(x=>{const p=st.pv[x];if(p)ec[p[1]]+=st.vis.includes(x)?' spt':' sptt';});
+    st.vis.forEach(x=>nc[x]+=' in');if(st.cur)nc[st.cur]+=' cur';nc[S.start]+=' start';
+    NODES.forEach(x=>{const b=$('d'+x);b.style.display='';b.setAttribute('class','db'+(st.vis.includes(x)?' fin':''));b.querySelector('text').textContent='d='+fmt(st.d[x]);});
+  }
+  // predict affordances
+  svg.querySelectorAll('.hit.can').forEach(h=>h.classList.remove('can'));
+  if(S.predict&&!st.done){
+    const nx=S.steps[S.i+1];
+    if(S.algo==='prim')nx.cand.forEach(k=>$('h'+k).classList.add('can'));
+    if(S.algo==='dijk')NODES.forEach(x=>{if(!st.vis.includes(x)&&st.d[x]<Infinity)nc[x]+=' can';});
+  }else svg.querySelectorAll('.hit.can').forEach(h=>h.classList.remove('can'));
+  for(const k in ec)setCls('e'+k,ec[k]);for(const x in nc)setCls('n'+x,nc[x]);
+  E.forEach(e=>setCls('w'+e.k,'wb'+(hl.has(e.k)?' hl':'')));
+
+  $('stepno').innerHTML='단계 '+S.i+' <small>/ '+n+'</small>';
+  $('tag').textContent={prim:'프림 · 시작 '+S.start,kruskal:'크루스칼',dijk:'다익스트라 · 출발 '+S.start}[S.algo];
+  const dots=$('dots');dots.innerHTML='';
+  S.steps.forEach((_,j)=>{const b=document.createElement('button');b.className='dot'+(j<S.i?' past':j===S.i?' now':'');b.textContent=j;b.setAttribute('aria-label','단계 '+j+'로 이동');b.onclick=()=>{stop();S.i=j;S.fb=null;render();};dots.appendChild(b);});
+  $('fb').innerHTML=S.fb?'<p class="fb '+S.fb[0]+'">'+S.fb[1]+'</p>':'';
+  $('msg').textContent=st.msg;
+  $('detail').innerHTML=detail(st);
+  const kb=$('kguess');if(kb){kb.querySelectorAll('button').forEach(b=>b.onclick=()=>guessK(b.dataset.g));}
+  $('b-prev').disabled=S.i===0;$('b-first').disabled=S.i===0;$('b-next').disabled=!!st.done;
+  $('startwrap').style.display=S.algo==='kruskal'?'none':'';
+  $('legend').innerHTML=legend();
+}
+function legend(){
+  const sw=(c,dash)=>'<i class="sw" style="border-top-color:var('+c+')'+(dash?';border-top-style:dashed':'')+'"></i>';
+  if(S.algo==='prim')return '<span>'+sw('--orange')+'MST 간선</span><span>'+sw('--blue',1)+'이번 후보</span><span><i class="sw" style="border:0;width:14px;height:14px;border-radius:50%;background:var(--blue-soft);outline:2px solid var(--blue)"></i>U(영토)</span>';
+  if(S.algo==='kruskal')return '<span>'+sw('--orange')+'채택</span><span>'+sw('--red',1)+'제외(사이클)</span><span>'+sw('--ink')+'지금 검사</span>';
+  return '<span>'+sw('--blue')+'확정된 최단경로</span><span>'+sw('--blue',1)+'임시 경로</span><span>d = 출발점에서의 거리</span>';
+}
+function detail(st){
+  let h='';
+  if(S.algo==='prim'){
+    if(st.candE){h+='<h3>이번 단계에서 비교한 후보 간선</h3><div class="chips">'+st.candE.map(e=>'<span class="chip'+(e.k===st.pick?' pick':'')+'">('+e.u+','+e.v+') '+e.w+'</span>').join('')+'</div>';}
+    h+='<h3>현재 상태</h3><div class="kv"><span>U = {'+[...st.U].sort((a,b)=>a-b).join(', ')+'}</span><span>누적 비용 <b>'+st.tot+'</b></span></div>';
+    if(S.predict&&!st.done)h+='<h3>예측</h3><p class="msg">다음에 고를 간선을 그래프에서 눌러 보세요.</p>';
+    if(st.done)h+='<div class="done"><p class="big">MST 완성 · 총비용 '+st.tot+'</p><p>간선 '+st.T.length+'개, 사이클 없이 모든 정점이 연결되었습니다.</p></div>';
+  }else if(S.algo==='kruskal'){
+    h+='<h3>비용 순 간선 목록</h3><div class="chips">'+st.EE.map(e=>{const s=st.status[e.k];return '<span class="chip '+(s==='ok'?'ok':s==='no'?'no':'wait')+(e.k===st.cur?' curk':'')+'">('+e.u+','+e.v+') '+e.w+'</span>';}).join('')+'</div>';
+    h+='<h3>무리(Union-Find)</h3><div class="chips">'+st.groups.map(g=>'<span class="chip'+(g.length>1?' grp':'')+'">{'+g.sort((a,b)=>a-b).join(', ')+'}</span>').join('')+'</div>';
+    h+='<h3>현재 상태</h3><div class="kv"><span>채택 간선 '+st.T.length+' / '+(NODES.length-1)+'</span><span>누적 비용 <b>'+st.tot+'</b></span></div>';
+    if(S.predict&&!st.done){const nx=S.steps[S.i+1];h+='<h3>예측</h3><p class="msg">다음 검사 간선 '+ek(nx.cur)+' = '+wOf(nx.cur)+'. 채택될까요?</p><div class="chips" id="kguess" style="margin-top:8px"><button class="btn" data-g="ok">채택</button><button class="btn" data-g="no">제외(사이클)</button></div>';}
+    if(st.done)h+='<div class="done"><p class="big">MST 완성 · 총비용 '+st.tot+'</p><p>프림으로 구한 값과 같은지 비교해 보세요.</p></div>';
+  }else{
+    h+='<h3>거리표</h3><div class="tbl"><table><tr><th>정점</th><th>거리 d</th><th>직전 정점</th><th>상태</th></tr>'+NODES.map(x=>'<tr'+(x===st.cur?' class="curr"':'')+'><td>'+x+'</td><td>'+fmt(st.d[x])+'</td><td>'+(st.pv[x]?st.pv[x][0]:'–')+'</td><td>'+(st.vis.includes(x)?'<span class="st-fin">확정</span>':'임시')+'</td></tr>').join('')+'</table></div>';
+    if(S.predict&&!st.done)h+='<h3>예측</h3><p class="msg">다음에 확정될 정점을 그래프에서 눌러 보세요.</p>';
+    if(st.done){const sum=NODES.reduce((a,x)=>a+(st.pv[x]?wOf(st.pv[x][1]):0),0),m=mstTotal();
+      h+='<div class="done"><p class="big">최단경로 트리 간선 합 '+sum+' · MST '+m+'</p><p>'+(sum>m?'최단경로 트리는 출발점에서 각 정점까지의 거리를 줄이고, MST는 전체 연결 비용을 줄입니다. 목표가 달라 고르는 간선도 다릅니다.':'이번 가중치에서는 두 트리의 합이 같습니다. 가중치를 바꿔 차이가 생기는 경우를 찾아보세요.')+'</p></div>';}
+  }
+  return h;
+}
+function advance(){if(S.i<S.steps.length-1){S.i++;render();return true;}return false;}
+function clickEdge(k){
+  if(!S.predict||S.algo!=='prim')return;const st=S.steps[S.i];if(st.done)return;
+  const nx=S.steps[S.i+1],w=wOf(k),best=wOf(nx.pick);
+  if(!nx.cand.includes(k)){S.fb=['bad',ek(k)+'는 후보가 아닙니다. U와 바깥을 잇는 간선만 고를 수 있어요.'];render();return;}
+  if(w===best){const save=nx.pick;S.fb=['ok','정답! '+ek(k)+' = '+w+'가 가장 싼 후보입니다.'+(k!==save?' (같은 비용인 '+ek(save)+'로 진행합니다)':'')];advance();}
+  else{S.fb=['bad',ek(k)+' = '+w+'보다 싼 후보가 있어요. 파란 점선 간선들을 다시 비교해 보세요.'];render();}
+}
+function clickNode(x){
+  if(!S.predict||S.algo!=='dijk')return;const st=S.steps[S.i];if(st.done)return;
+  const nx=S.steps[S.i+1];
+  if(st.vis.includes(x)){S.fb=['bad',x+'번은 이미 확정된 정점입니다.'];render();return;}
+  if(st.d[x]===st.d[nx.cur]){S.fb=['ok','정답! 확정 안 된 정점 중 '+x+'번의 거리 '+st.d[x]+'가 가장 짧습니다.'];if(x!==nx.cur)S.fb[1]+=' (같은 거리인 '+nx.cur+'번으로 진행합니다)';advance();}
+  else{S.fb=['bad',x+'번의 거리는 '+fmt(st.d[x])+'. 더 가까운 임시 정점이 있어요.'];render();}
+}
+function guessK(g){
+  const nx=S.steps[S.i+1];
+  S.fb=g===nx.dec?['ok','정답! '+(g==='ok'?'두 끝점이 다른 무리라 채택됩니다.':'두 끝점이 이미 같은 무리라 사이클이 생깁니다.')]:['bad','아쉬워요. '+(nx.dec==='ok'?'두 끝점은 아직 다른 무리라서 채택됩니다.':'두 끝점이 이미 같은 무리라 사이클이 생겨 제외됩니다.')];
+  advance();
+}
+function clickWeight(k){
+  if(!S.edit)return;const i=DEF.findIndex(e=>key(e[0],e[1])===k);W[i]=W[i]%9+1;stop();compute();S.fb=['ok',ek(k)+'의 가중치를 '+W[i]+'(으)로 바꾸고 처음부터 다시 계산했습니다.'];render();
+}
+function stop(){if(S.timer){clearInterval(S.timer);S.timer=null;}$('b-play').setAttribute('aria-pressed','false');$('b-play').textContent='자동 재생';}
+function play(){if(S.timer){stop();return;}if(S.steps[S.i].done){S.i=0;}S.fb=null;render();$('b-play').setAttribute('aria-pressed','true');$('b-play').textContent='일시 정지';
+  S.timer=setInterval(()=>{S.fb=null;if(!advance())stop();},+$('speed').value);}
+
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{stop();S.algo=b.dataset.a;document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));compute();render();});
+$('b-next').onclick=()=>{stop();S.fb=null;advance();};
+$('b-prev').onclick=()=>{stop();S.fb=null;if(S.i>0){S.i--;render();}};
+$('b-first').onclick=()=>{stop();S.i=0;S.fb=null;render();};
+$('b-play').onclick=play;
+$('speed').onchange=()=>{if(S.timer){stop();play();}};
+$('start').onchange=e=>{stop();S.start=+e.target.value;compute();render();};
+$('b-predict').onclick=e=>{S.predict=!S.predict;e.currentTarget.setAttribute('aria-pressed',S.predict);stop();S.fb=null;render();};
+$('b-edit').onclick=e=>{S.edit=!S.edit;e.currentTarget.setAttribute('aria-pressed',S.edit);render();};
+$('b-rand').onclick=()=>{stop();W=W.map(()=>1+Math.floor(Math.random()*9));compute();S.fb=['ok','가중치를 무작위로 바꿨습니다.'];render();};
+$('b-reset').onclick=()=>{stop();W=DEF.map(e=>e[2]);compute();render();};
+document.addEventListener('keydown',e=>{if(e.target.tagName==='SELECT')return;if(e.key==='ArrowRight'){stop();S.fb=null;advance();}if(e.key==='ArrowLeft'&&S.i>0){stop();S.fb=null;S.i--;render();}});
+
+build();compute();
+// open on a meaningful mid-run frame
+S.i=3;render();
+})();
+</script>
+</body>
+</html>

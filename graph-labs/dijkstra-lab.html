@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>다익스트라 길찾기 실험실</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: chapter-7 lab — tab strip of three experiments; each = board (left) + notebook (right), stacking on phones */
+:root{
+  --bg:#F4F6F9; --card:#FFFFFF; --ink:#1B2533; --muted:#5A6676; --line:#CDD5DF; --soft:#EEF2F7;
+  --blue:#2A66A8; --blue-soft:#DCE9F7; --orange:#D9692A; --orange-ink:#A9480F; --orange-soft:#FCE6D6;
+  --red:#C0392B; --red-soft:#F9E0DC; --green:#2C7A4B; --green-soft:#DDF0E4; --wall:#3B4656;
+  --f:'Noto Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171E; --card:#1C232D; --ink:#ECEFF3; --muted:#9AA6B5; --line:#3A4553; --soft:#252E3A;
+  --blue:#78B0EA; --blue-soft:#1F3A57; --orange:#F0A060; --orange-ink:#F6B884; --orange-soft:#4A2D17;
+  --red:#F08A7E; --red-soft:#4A2421; --green:#7FCB9C; --green-soft:#1D3A29; --wall:#8E9AAB; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171E; --card:#1C232D; --ink:#ECEFF3; --muted:#9AA6B5; --line:#3A4553; --soft:#252E3A;
+  --blue:#78B0EA; --blue-soft:#1F3A57; --orange:#F0A060; --orange-ink:#F6B884; --orange-soft:#4A2D17;
+  --red:#F08A7E; --red-soft:#4A2421; --green:#7FCB9C; --green-soft:#1D3A29; --wall:#8E9AAB; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.55}
+.wrap{max-width:1200px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-size:.78rem;font-weight:700;letter-spacing:.08em;color:var(--orange-ink);margin:0}
+h1{font-size:2rem;font-weight:900;margin:2px 0 0;line-height:1.15;text-wrap:balance}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px}
+.tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-weight:700;padding:9px 14px;border-radius:10px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--blue);color:#fff}
+.grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
+.panel h2{font-size:1.15rem;margin:0 0 4px;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 10px;max-width:65ch}
+svg.g{width:100%;height:auto;display:block}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:10px;padding:8px 12px;min-height:40px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn[aria-pressed="true"]{background:var(--orange-soft);border-color:var(--orange);color:var(--orange-ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:focus-visible,.tabs button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+select,input[type=number]{font:inherit;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:10px;padding:7px 9px;min-height:40px}
+input[type=number]{width:5.2em;font-variant-numeric:tabular-nums}
+label.inl{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:.88rem}
+.sep{border-top:1px dashed var(--line);margin-top:12px;padding-top:12px}
+/* graph marks */
+.ed{stroke:var(--line);stroke-width:3;fill:none;transition:stroke .3s,stroke-width .3s}
+.ed.chk{stroke:var(--orange);stroke-width:5}
+.ed.tree{stroke:var(--blue);stroke-width:5}
+.ed.path{stroke:var(--orange);stroke-width:9}
+.ed.tour{stroke:var(--orange);stroke-width:7}
+.ed.alt{stroke:var(--blue);stroke-width:6}
+.ed.dim{opacity:.35}
+.wl rect{fill:var(--card);stroke:none}
+.wl text{fill:var(--ink);font:700 20px var(--f);text-anchor:middle;dominant-baseline:central}
+.wl.neg text{fill:var(--red)}
+.nd circle{fill:var(--card);stroke:var(--muted);stroke-width:3;transition:fill .3s,stroke .3s}
+.nd text{fill:var(--ink);font:700 26px var(--f);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.nd.S circle{fill:var(--blue);stroke:var(--blue)}
+.nd.S text{fill:#fff}
+.nd.w circle{fill:var(--orange);stroke:var(--orange)}
+.nd.w text{fill:#fff}
+.nd.can{cursor:pointer}
+.nd.can circle{stroke:var(--orange);stroke-dasharray:5 4}
+.nd.vis circle{fill:var(--orange-soft);stroke:var(--orange)}
+.nd.last circle{stroke-width:6}
+.nd.click{cursor:pointer}
+.db rect{fill:var(--soft);stroke:var(--line)}
+.db text{fill:var(--ink);font:700 17px var(--f);text-anchor:middle;dominant-baseline:central}
+.db.S rect{fill:var(--blue-soft);stroke:var(--blue)}
+.db.up rect{fill:var(--orange-soft);stroke:var(--orange)}
+.tagS{fill:var(--blue)}
+.tagS-t{fill:#fff;font:700 15px var(--f);text-anchor:middle;dominant-baseline:central}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.82rem;color:var(--muted);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.lg{display:inline-block;width:14px;height:14px;border-radius:50%}
+.lgl{display:inline-block;width:22px;height:0;border-top:5px solid}
+/* notebook */
+.stephead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+.stepno{font-size:1.5rem;font-weight:900}
+.stepno small{font-size:1rem;color:var(--muted);font-weight:500}
+.pill{font-size:.78rem;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--blue-soft);color:var(--blue)}
+.msg{background:var(--soft);border-radius:12px;padding:12px 14px;margin:10px 0;max-width:65ch}
+.formula{font-variant-numeric:tabular-nums;border-left:4px solid var(--orange);padding:6px 12px;margin:6px 0;background:var(--orange-soft);border-radius:0 10px 10px 0}
+.formula b{color:var(--orange-ink)}
+.dcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(78px,1fr));gap:8px;margin:10px 0}
+.dc{border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center;background:var(--card)}
+.dc .k{font-size:.78rem;color:var(--muted)}
+.dc .v{font-size:1.5rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.2}
+.dc .s{font-size:.75rem;color:var(--muted)}
+.dc.S{border-color:var(--blue);background:var(--blue-soft)}
+.dc.up{border-color:var(--orange);background:var(--orange-soft)}
+.dc.up .s{color:var(--orange-ink);font-weight:700}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:center;font-size:.9rem;white-space:nowrap}
+th{color:var(--muted);font-size:.78rem;font-weight:700}
+td.u{color:var(--orange-ink);font-weight:900}
+tr.now td{background:var(--soft)}
+tr.best td{background:var(--orange-soft);font-weight:700}
+h3{font-size:.8rem;letter-spacing:.06em;color:var(--muted);margin:14px 0 6px}
+.fb{border-radius:12px;padding:10px 14px;font-weight:500;margin:8px 0}
+.fb.ok{background:var(--green-soft);color:var(--green)}
+.fb.bad{background:var(--red-soft);color:var(--red)}
+.fb.warn{background:var(--orange-soft);color:var(--orange-ink)}
+.done{border:2px solid var(--blue);border-radius:14px;padding:12px 14px;background:var(--blue-soft);margin-top:10px}
+.done p{margin:2px 0}
+.edits{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.edits label{display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--soft);border-radius:10px;padding:4px 4px 4px 10px;font-weight:700;font-variant-numeric:tabular-nums}
+details summary{cursor:pointer;font-weight:700;padding:4px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-radius:10px;padding:4px 10px;background:var(--card);font-variant-numeric:tabular-nums}
+.chip.on{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-ink);font-weight:700}
+.big{font-size:2rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1}
+.range{width:100%;accent-color:var(--blue)}
+/* A* */
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.duo{grid-template-columns:minmax(0,1fr)}}
+.board h3{margin:0 0 6px;display:flex;justify-content:space-between;gap:8px;font-size:.9rem;letter-spacing:0;color:var(--ink)}
+canvas{width:100%;height:auto;display:block;border-radius:10px;touch-action:none;cursor:crosshair}
+.stats{display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums;color:var(--muted);font-size:.88rem;margin-top:6px}
+.stats b{color:var(--ink);font-size:1.1rem}
+.tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.tips{grid-template-columns:minmax(0,1fr)}}
+.tip{border-top:3px solid var(--line);padding-top:8px;color:var(--muted);font-size:.9rem}
+.tip b{display:block;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">CHAPTER 7 · 그래프의 응용</p>
+      <h1>다익스트라 길찾기 실험실</h1>
+    </div>
+    <div class="tabs" role="tablist" aria-label="실험 선택">
+      <button role="tab" id="tab-dij" aria-selected="true" data-p="p-dij">① 다익스트라</button>
+      <button role="tab" id="tab-tsp" aria-selected="false" data-p="p-tsp">② 해밀턴 순회 · 외판원</button>
+      <button role="tab" id="tab-ast" aria-selected="false" data-p="p-ast">③ 다익스트라 vs A*</button>
+    </div>
+  </header>
+
+  <!-- ① Dijkstra -->
+  <section id="p-dij" role="tabpanel" aria-labelledby="tab-dij">
+    <div class="grid">
+      <div class="panel">
+        <h2 id="dj-title">예제 7-14 · 방향 그래프</h2>
+        <p class="lead" id="dj-lead">화살표 방향으로만 갈 수 있습니다. 점을 누르면 출발점에서 그 점까지의 현재 경로가 보입니다.</p>
+        <svg class="g" id="dj-svg" viewBox="-60 -40 720 520" role="img" aria-label="다익스트라 예제 그래프"></svg>
+        <div class="legend">
+          <span><i class="lg" style="background:var(--blue)"></i>확정(S)</span>
+          <span><i class="lg" style="background:var(--orange)"></i>이번에 선택한 w</span>
+          <span><i class="lgl" style="border-color:var(--orange)"></i>검사하는 간선</span>
+          <span><i class="lgl" style="border-color:var(--blue)"></i>최단 경로 트리</span>
+        </div>
+        <div class="ctl">
+          <button class="btn" id="dj-first">⏮ 처음</button>
+          <button class="btn" id="dj-prev">◀ 이전</button>
+          <button class="btn primary" id="dj-next">다음 ▶</button>
+          <button class="btn" id="dj-play" aria-pressed="false">자동 재생</button>
+          <button class="btn" id="dj-pred" aria-pressed="false">w 맞히기</button>
+        </div>
+        <div class="ctl sep">
+          <label class="inl" for="dj-preset">그래프
+            <select id="dj-preset"><option value="ex">교재 예제 7-14</option><option value="neg">음수 간선 반례</option></select>
+          </label>
+          <label class="inl" for="dj-start">출발점 <select id="dj-start"></select></label>
+        </div>
+        <details class="sep" id="dj-editbox">
+          <summary>가중치 바꾸기 (음수도 넣어 보세요)</summary>
+          <div class="edits" id="dj-edits"></div>
+        </details>
+      </div>
+      <div class="panel" aria-live="polite">
+        <div class="stephead"><div class="stepno" id="dj-no"></div><span class="pill" id="dj-S"></span></div>
+        <div id="dj-fb"></div>
+        <p class="msg" id="dj-msg"></p>
+        <div id="dj-formula"></div>
+        <div class="dcards" id="dj-cards"></div>
+        <h3>D 값의 변화</h3>
+        <div class="tbl"><table id="dj-table"></table></div>
+        <div id="dj-done"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② Hamilton / TSP -->
+  <section id="p-tsp" role="tabpanel" aria-labelledby="tab-tsp" hidden>
+    <div class="grid">
+      <div class="panel">
+        <h2 id="ts-title"></h2>
+        <p class="lead" id="ts-lead"></p>
+        <svg class="g" id="ts-svg" viewBox="0 0 600 470" role="img" aria-label="순회 그래프"></svg>
+        <div class="ctl">
+          <button class="btn" id="ts-undo">한 칸 되돌리기</button>
+          <button class="btn" id="ts-clear">처음부터</button>
+          <button class="btn primary" id="ts-all">모든 순회 보기</button>
+        </div>
+        <div class="ctl sep">
+          <label class="inl" for="ts-preset">문제
+            <select id="ts-preset"><option value="tsp">외판원 문제 (A~D, 교재)</option><option value="ham">해밀턴 순회 찾기 (A~E)</option><option value="tsp5">외판원 문제 (5곳)</option></select>
+          </label>
+        </div>
+        <details class="sep" id="ts-editbox">
+          <summary>거리 바꾸기</summary>
+          <div class="edits" id="ts-edits"></div>
+        </details>
+      </div>
+      <div class="panel" aria-live="polite">
+        <h3 style="margin-top:0">내가 만든 순회</h3>
+        <p class="big" id="ts-route">A</p>
+        <div id="ts-fb"></div>
+        <div id="ts-list"></div>
+        <div class="sep">
+          <h3 style="margin-top:0">점이 늘면 경우의 수가 폭발한다</h3>
+          <label class="inl" for="ts-n" style="width:100%;justify-content:space-between">들를 곳의 수 n = <b id="ts-nv" style="color:var(--ink);font-size:1.1rem">10</b></label>
+          <input class="range" type="range" id="ts-n" min="3" max="25" value="10">
+          <p style="margin:6px 0 0">서로 다른 순회 (n − 1)! / 2 = <b id="ts-cnt" class="big" style="font-size:1.4rem;display:block"></b></p>
+          <p style="color:var(--muted);margin:4px 0 0" id="ts-time"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ Dijkstra vs A* -->
+  <section id="p-ast" role="tabpanel" aria-labelledby="tab-ast" hidden>
+    <div class="panel">
+      <h2>같은 지도, 다른 탐색 범위</h2>
+      <p class="lead">지도를 눌러 끌면 벽을 그리거나 지웁니다. S는 출발, G는 목적지입니다. 두 알고리즘이 같은 속도로 한 칸씩 확정하며 G를 찾습니다.</p>
+      <div class="duo">
+        <div class="board"><h3><span>다익스트라 (h = 0)</span></h3><canvas id="cv-d" tabindex="0" aria-label="다익스트라 탐색 지도"></canvas><div class="stats" id="st-d"></div></div>
+        <div class="board"><h3><span id="ast-name">A* (h = 맨해튼 거리)</span></h3><canvas id="cv-a" tabindex="0" aria-label="A* 탐색 지도"></canvas><div class="stats" id="st-a"></div></div>
+      </div>
+      <div class="legend" style="margin-top:10px">
+        <span><i class="lg" style="background:var(--blue-soft);border:1px solid var(--blue);border-radius:3px"></i>확정한 칸</span>
+        <span><i class="lg" style="background:var(--orange-soft);border:1px solid var(--orange);border-radius:3px"></i>후보(열린 목록)</span>
+        <span><i class="lg" style="background:var(--orange);border-radius:3px"></i>찾은 경로</span>
+        <span><i class="lg" style="background:var(--wall);border-radius:3px"></i>벽</span>
+      </div>
+      <div class="ctl">
+        <button class="btn primary" id="as-run">탐색 시작</button>
+        <button class="btn" id="as-step">한 칸씩</button>
+        <button class="btn" id="as-reset">탐색 지우기</button>
+        <label class="inl" for="as-tool">도구
+          <select id="as-tool"><option value="wall">벽 그리기/지우기</option><option value="S">출발 S 옮기기</option><option value="G">목적지 G 옮기기</option></select>
+        </label>
+        <label class="inl" for="as-map">지도
+          <select id="as-map"><option value="wall">가운데 벽</option><option value="empty">빈 지도</option><option value="maze">미로</option><option value="cup">ㄷ자 함정</option></select>
+        </label>
+        <label class="inl" for="as-h">A*의 h
+          <select id="as-h"><option value="1">맨해튼 거리 (과대평가 안 함)</option><option value="3">맨해튼 × 3 (과대평가)</option></select>
+        </label>
+        <label class="inl" for="as-speed">속도
+          <select id="as-speed"><option value="70">느리게</option><option value="25" selected>보통</option><option value="6">빠르게</option></select>
+        </label>
+      </div>
+      <div id="as-fb" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <div class="tips">
+    <div class="tip"><b>w 맞히기</b>다음에 확정될 점을 그래프에서 직접 눌러 보세요. S 밖에서 D가 가장 작은 점이 정답입니다.</div>
+    <div class="tip"><b>생각해 보기 확인</b>그래프를 ‘음수 간선 반례’로 바꾸고 끝까지 돌리면, 다익스트라의 답과 실제 최단 거리가 왜 달라지는지 볼 수 있습니다.</div>
+    <div class="tip"><b>A*의 조건</b>h를 ‘맨해튼 × 3’으로 바꾸면 탐색은 더 빨라져도 최단 경로를 놓칠 수 있습니다. ㄷ자 함정 지도에서 비교해 보세요.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+const NS='http://www.w3.org/2000/svg';
+const $=id=>document.getElementById(id);
+const INF=Infinity, fmt=x=>x===INF?'∞':x;
+function el(t,a,p){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);if(p)p.appendChild(n);return n;}
+function arrowDefs(svg){const d=el('defs',{},svg);[['g','var(--line)'],['o','var(--orange)'],['b','var(--blue)']].forEach(([id,c])=>{const m=el('marker',{id:'ar-'+id,viewBox:'0 0 10 10',refX:'8.5',refY:'5',markerWidth:'4.2',markerHeight:'4.2',orient:'auto-start-reverse'},d);el('path',{d:'M0,0 L10,5 L0,10 z',style:'fill:'+c},m);});}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('[role=tab]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[role=tab]').forEach(x=>{x.setAttribute('aria-selected',x===b);$(x.dataset.p).hidden=x!==b;});
+  if(b.dataset.p==='p-ast')AS.resize();
+});
+
+/* ================= ① DIJKSTRA ================= */
+const PRE={
+  ex:{title:'예제 7-14 · 방향 그래프',nodes:{1:[300,60],2:[105,195],5:[495,195],3:[180,400],4:[420,400]},
+      edges:[[1,2,10],[1,5,100],[1,4,30],[2,3,50],[4,3,20],[3,5,10],[4,5,60]],start:1},
+  neg:{title:'음수 간선 반례 · 점 3개',nodes:{1:[110,220],2:[490,90],3:[490,370]},
+      edges:[[1,2,2],[1,3,5],[3,2,-4]],start:1}
+};
+const D={g:null,start:1,steps:[],i:0,pred:false,fb:null,timer:null,show:null};
+const CEN=[300,240];
+function dijRun(g,s){
+  const N=Object.keys(g.nodes).map(Number).sort((a,b)=>a-b),out={};N.forEach(n=>out[n]=[]);
+  g.edges.forEach(([u,v,w])=>out[u].push([v,w]));
+  const d={},p={};N.forEach(n=>{d[n]=INF;p[n]=null;});d[s]=0;
+  out[s].forEach(([v,w])=>{if(w<d[v]){d[v]=w;p[v]=s;}});
+  const S=[s],rows=[{S:[s],w:null,d:{...d},up:[]}];
+  const steps=[{S:[...S],d:{...d},p:{...p},w:null,chk:out[s].map(([v])=>s+'-'+v),up:{},formula:[],
+    msg:'S = {'+s+'}. 점 '+s+'에서 바로 갈 수 있는 점의 거리를 D에 적고, 바로 갈 수 없는 점은 ∞로 둡니다.',rows:rows.slice()}];
+  while(S.length<N.length){
+    let w=null;N.forEach(n=>{if(!S.includes(n)&&d[n]<INF&&(w===null||d[n]<d[w]))w=n;});
+    if(w===null)break;
+    const cands=N.filter(n=>!S.includes(n)).map(n=>'D['+n+'] = '+fmt(d[n])).join(', ');
+    S.push(w);const up={},formula=[],chk=[],skipped=[];
+    out[w].forEach(([v,c])=>{chk.push(w+'-'+v);
+      if(S.includes(v)){skipped.push(v);return;}
+      const nd=d[w]+c;formula.push({v,old:d[v],dw:d[w],c,nd,ch:nd<d[v]});
+      if(nd<d[v]){up[v]=[d[v],nd];d[v]=nd;p[v]=w;}});
+    rows.push({S:[...S],w,d:{...d},up:Object.keys(up).map(Number)});
+    let msg='S 밖의 '+cands+' 중 가장 작은 점 '+w+'를 골라 확정합니다.';
+    if(!out[w].length)msg+=' 점 '+w+'에서 나가는 간선이 없으므로 갱신할 것이 없습니다.';
+    else if(!Object.keys(up).length&&!skipped.length)msg+=' 점 '+w+'를 거쳐 가도 더 짧아지는 곳이 없습니다.';
+    if(skipped.length)msg+=' 점 '+skipped.join(', ')+'는 이미 확정되어 다시 검사하지 않습니다.';
+    steps.push({S:[...S],d:{...d},p:{...p},w,chk,up,formula,msg,skipped,rows:rows.slice()});
+  }
+  steps[steps.length-1].done=true;return steps;
+}
+function bellman(g,s){const N=Object.keys(g.nodes).map(Number),d={};N.forEach(n=>d[n]=INF);d[s]=0;
+  for(let i=0;i<N.length;i++)g.edges.forEach(([u,v,w])=>{if(d[u]<INF&&d[u]+w<d[v])d[v]=d[u]+w;});return d;}
+function pathTo(st,t){const P=[t];let c=t,guard=0;while(c!==D.start&&st.p[c]!=null&&guard++<20){c=st.p[c];P.unshift(c);}return P[0]===D.start?P:null;}
+
+function djBuild(){
+  const svg=$('dj-svg');svg.innerHTML='';arrowDefs(svg);const g=D.g;
+  const ge=el('g',{},svg),gl=el('g',{},svg),gn=el('g',{},svg),gb=el('g',{},svg);
+  g.edges.forEach(([u,v,w],i)=>{
+    const [x1,y1]=g.nodes[u],[x2,y2]=g.nodes[v],dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,r=32;
+    el('line',{id:'de'+u+'-'+v,class:'ed',x1:x1+ux*r,y1:y1+uy*r,x2:x2-ux*(r+4),y2:y2-uy*(r+4),'marker-end':'url(#ar-g)'},ge);
+    const mx=(x1+x2)/2-uy*20,my=(y1+y2)/2+ux*20,lg=el('g',{class:'wl'+(w<0?' neg':''),id:'dw'+u+'-'+v},gl);
+    el('rect',{x:mx-24,y:my-15,width:48,height:30,rx:8},lg);el('text',{x:mx,y:my},lg).textContent=w;
+  });
+  Object.entries(g.nodes).forEach(([n,[x,y]])=>{
+    const gg=el('g',{class:'nd',id:'dn'+n},gn);el('circle',{cx:x,cy:y,r:32},gg);el('text',{x,y},gg).textContent=n;
+    gg.addEventListener('click',()=>djNodeClick(+n));
+    let dx=x-CEN[0],dy=y-CEN[1],L=Math.hypot(dx,dy)||1;const bx=x+dx/L*72,by=y+dy/L*58;
+    const b=el('g',{class:'db',id:'db'+n},gb);el('rect',{x:bx-46,y:by-16,width:92,height:32,rx:16},b);el('text',{x:bx,y:by},b);
+  });
+  const [sx,sy]=g.nodes[D.start];const t=el('g',{id:'dj-tag'},gb);el('rect',{class:'tagS',x:sx-30,y:sy-62,width:60,height:24,rx:12},t);el('text',{class:'tagS-t',x:sx,y:sy-50},t).textContent='출발';
+  // edit panel
+  $('dj-edits').innerHTML=g.edges.map(([u,v,w],i)=>'<label for="dje'+i+'">'+u+' → '+v+'<input type="number" id="dje'+i+'" value="'+w+'" min="-99" max="999" step="1"></label>').join('');
+  g.edges.forEach((_,i)=>$('dje'+i).onchange=e=>{const x=parseInt(e.target.value,10);if(isNaN(x))return;g.edges[i][2]=Math.max(-99,Math.min(999,x));djStop();djCompute();djBuild();djRender();});
+  $('dj-start').innerHTML=Object.keys(g.nodes).map(n=>'<option'+(+n===D.start?' selected':'')+'>'+n+'</option>').join('');
+}
+function djCompute(){D.steps=dijRun(D.g,D.start);D.i=0;D.fb=null;D.show=null;}
+function djRender(){
+  const st=D.steps[D.i],g=D.g,N=Object.keys(g.nodes).map(Number).sort((a,b)=>a-b),last=D.steps.length-1;
+  // edges
+  const tree=new Set();N.forEach(n=>{if(st.S.includes(n)&&st.p[n]!=null)tree.add(st.p[n]+'-'+n);});
+  const path=new Set();if(D.show!=null){const P=pathTo(st,D.show);if(P)for(let k=1;k<P.length;k++)path.add(P[k-1]+'-'+P[k]);}
+  g.edges.forEach(([u,v])=>{const k=u+'-'+v,e=$('de'+k);let c='ed',m='g';
+    if(path.has(k)){c+=' path';m='o';}else if(st.chk.includes(k)&&D.i>0||D.i===0&&st.chk.includes(k)){c+=' chk';m='o';}else if(tree.has(k)){c+=' tree';m='b';}
+    e.setAttribute('class',c);e.setAttribute('marker-end','url(#ar-'+m+')');});
+  // nodes & badges
+  let nextW=null;if(!st.done){nextW=D.steps[D.i+1].w;}
+  N.forEach(n=>{let c='nd click';if(st.S.includes(n))c+=' S';if(n===st.w)c='nd click w';
+    if(D.pred&&!st.done&&!st.S.includes(n))c+=' can';$('dn'+n).setAttribute('class',c);
+    const b=$('db'+n);if(n===D.start){b.style.display='none';return;}b.style.display='';
+    b.setAttribute('class','db'+(st.S.includes(n)?' S':'')+(st.up[n]?' up':''));
+    b.querySelector('text').textContent='D = '+fmt(st.d[n])+(st.S.includes(n)?' ✔':'');});
+  // notebook
+  $('dj-no').innerHTML=(D.i===0?'초기화':'단계 '+D.i+' · w = '+st.w)+' <small>/ '+last+'단계</small>';
+  $('dj-S').textContent='S = {'+[...st.S].sort((a,b)=>a-b).join(', ')+'}';
+  $('dj-fb').innerHTML=D.fb?'<p class="fb '+D.fb[0]+'">'+D.fb[1]+'</p>':'';
+  $('dj-msg').textContent=st.msg;
+  $('dj-formula').innerHTML=st.formula.map(f=>'<div class="formula">D['+f.v+'] = min('+fmt(f.old)+', '+f.dw+' + '+(f.c<0?'('+f.c+')':f.c)+') = <b>'+fmt(Math.min(f.old,f.nd))+'</b>'+(f.ch?' &nbsp;갱신':' &nbsp;그대로')+'</div>').join('')+
+    (D.pred&&!st.done?'<p class="fb warn">다음에 확정될 점 w를 그래프에서 눌러 보세요.</p>':'');
+  $('dj-cards').innerHTML=N.filter(n=>n!==D.start).map(n=>{const S=st.S.includes(n),u=st.up[n];
+    return '<div class="dc'+(S?' S':'')+(u?' up':'')+'"><div class="k">D['+n+']</div><div class="v">'+fmt(st.d[n])+'</div><div class="s">'+(u?fmt(u[0])+' → '+u[1]+' 갱신':S?'확정':st.d[n]===INF?'길 없음':D.i===0?'기록':'그대로')+'</div></div>';}).join('');
+  const cols=N.filter(n=>n!==D.start);
+  $('dj-table').innerHTML='<tr><th>단계</th><th>S</th><th>w</th>'+cols.map(n=>'<th>D['+n+']</th>').join('')+'</tr>'+
+    st.rows.map((r,j)=>'<tr'+(j===st.rows.length-1?' class="now"':'')+'><td>'+j+'</td><td>{'+r.S.slice().sort((a,b)=>a-b).join(', ')+'}</td><td>'+(r.w??'—')+'</td>'+cols.map(n=>'<td'+(r.up.includes(n)?' class="u"':'')+'>'+fmt(r.d[n])+'</td>').join('')+'</tr>').join('');
+  // done
+  let h='';
+  if(st.done){
+    const bf=bellman(g,D.start),bad=N.filter(n=>bf[n]!==st.d[n]);
+    h='<div class="done"><p><b>모든 점 확정, 끝!</b> 점을 누르면 경로가 주황색으로 표시됩니다.</p>'+cols.map(n=>{const P=pathTo(st,n);return '<p>점 '+n+': '+(P?P.join(' → ')+' = '+st.d[n]:'갈 수 없음')+'</p>';}).join('')+'</div>';
+    if(bad.length)h+='<p class="fb bad">실제 최단 거리와 다릅니다! '+bad.map(n=>'D['+n+']는 '+fmt(st.d[n])+'이지만 실제로는 '+fmt(bf[n])).join(', ')+'입니다. 음수 간선 때문에, 이미 확정한 점으로 가는 더 짧은 길이 나중에 나타났지만 다익스트라는 확정한 점을 다시 보지 않습니다. 이런 그래프에는 벨만-포드 알고리즘을 씁니다.</p>';
+    else if(g.edges.some(e=>e[2]<0))h+='<p class="fb warn">음수 간선이 있지만 이번에는 우연히 답이 맞았습니다. 음수가 있으면 정확성이 보장되지 않습니다.</p>';
+  }
+  $('dj-done').innerHTML=h;
+  $('dj-prev').disabled=$('dj-first').disabled=D.i===0;$('dj-next').disabled=!!st.done;
+}
+function djNodeClick(n){
+  const st=D.steps[D.i];
+  if(D.pred&&!st.done){
+    const nx=D.steps[D.i+1];
+    if(st.S.includes(n)){D.fb=['bad','점 '+n+'는 이미 S에 있습니다. S 밖의 점 중에서 고르세요.'];djRender();return;}
+    if(st.d[n]===st.d[nx.w]){D.fb=['ok','정답! S 밖에서 D['+n+'] = '+fmt(st.d[n])+'이 가장 작습니다.'+(n!==nx.w?' (같은 값인 점 '+nx.w+'로 진행)':'')];D.show=null;D.i++;djRender();}
+    else{D.fb=['bad','D['+n+'] = '+fmt(st.d[n])+'보다 작은 값을 가진 점이 S 밖에 있어요.'];djRender();}
+    return;
+  }
+  D.show=D.show===n?null:n;D.fb=null;
+  if(D.show!=null){const P=pathTo(st,n);D.fb=P?['ok','지금까지 알아낸 경로: '+P.join(' → ')+' = '+fmt(st.d[n])+(st.S.includes(n)?' (확정)':' (아직 바뀔 수 있음)')]:['warn','점 '+n+'까지 가는 길을 아직 찾지 못했습니다.'];}
+  djRender();
+}
+function djStop(){if(D.timer){clearInterval(D.timer);D.timer=null;}$('dj-play').setAttribute('aria-pressed','false');$('dj-play').textContent='자동 재생';}
+function djLoad(k){D.g=JSON.parse(JSON.stringify(PRE[k]));D.start=D.g.start;$('dj-title').textContent=D.g.title;
+  $('dj-lead').textContent=k==='neg'?'3 → 2 간선의 가중치가 −4입니다. 끝까지 진행한 뒤 실제 최단 거리와 비교해 보세요.':'화살표 방향으로만 갈 수 있습니다. 점을 누르면 출발점에서 그 점까지의 현재 경로가 보입니다.';
+  djStop();djCompute();djBuild();djRender();}
+$('dj-next').onclick=()=>{djStop();if(D.i<D.steps.length-1){D.i++;D.fb=null;D.show=null;djRender();}};
+$('dj-prev').onclick=()=>{djStop();if(D.i>0){D.i--;D.fb=null;D.show=null;djRender();}};
+$('dj-first').onclick=()=>{djStop();D.i=0;D.fb=null;D.show=null;djRender();};
+$('dj-play').onclick=()=>{if(D.timer){djStop();return;}if(D.steps[D.i].done)D.i=0;D.fb=null;D.show=null;djRender();
+  $('dj-play').setAttribute('aria-pressed','true');$('dj-play').textContent='일시 정지';
+  D.timer=setInterval(()=>{if(D.i<D.steps.length-1){D.i++;djRender();}else djStop();},1700);};
+$('dj-pred').onclick=e=>{D.pred=!D.pred;e.currentTarget.setAttribute('aria-pressed',D.pred);djStop();D.fb=null;djRender();};
+$('dj-preset').onchange=e=>{djLoad(e.target.value);if(e.target.value==='neg')$('dj-editbox').open=true;};
+$('dj-start').onchange=e=>{D.start=+e.target.value;djStop();djCompute();djBuild();djRender();};
+djLoad('ex');
+
+/* ================= ② HAMILTON / TSP ================= */
+const TP={
+  tsp:{title:'외판원 문제 · 택배 기사가 A에서 출발',lead:'A에서 시작해 점을 차례로 눌러 4곳을 한 번씩 들르고 A로 돌아오세요. 합이 가장 작은 순서를 찾아봅시다.',
+    nodes:{A:[110,90],B:[490,90],C:[490,390],D:[110,390]},edges:[['A','B',2],['B','C',6],['C','D',8],['D','A',10],['B','D',4],['A','C',9]],w:true},
+  ham:{title:'해밀턴 순회 찾기 · 모든 점을 한 번씩',lead:'A에서 시작해 이어진 점을 차례로 누르세요. 모든 점을 정확히 한 번씩 지나 A로 돌아오면 성공입니다.',
+    nodes:{A:[300,55],B:[520,200],C:[440,420],D:[160,420],E:[80,200]},edges:[['A','C'],['C','B'],['B','D'],['D','E'],['E','A'],['A','B'],['C','D']],w:false},
+  tsp5:{title:'외판원 문제 · 5곳',lead:'5곳이면 서로 다른 순회는 (5 − 1)! / 2 = 12가지입니다. 직감으로 가장 짧은 순회를 찾아본 뒤 정답과 비교해 보세요.',
+    nodes:{A:[300,55],B:[520,200],C:[440,420],D:[160,420],E:[80,200]},
+    edges:[['A','B',7],['A','C',12],['A','D',9],['A','E',5],['B','C',6],['B','D',11],['B','E',10],['C','D',4],['C','E',13],['D','E',8]],w:true}
+};
+const T={g:null,route:['A'],show:null,fb:null};
+const ekey=(a,b)=>a<b?a+b:b+a;
+function tw(a,b){const e=T.g.edges.find(e=>ekey(e[0],e[1])===ekey(a,b));return e?(e[2]??0):null;}
+function tours(){const N=Object.keys(T.g.nodes),rest=N.slice(1),res=[],seen=new Set();
+  (function perm(cur,left){if(!left.length){const r=['A',...cur,'A'];for(let i=1;i<r.length;i++)if(tw(r[i-1],r[i])===null)return;
+      const k=r.join(''),rk=r.slice().reverse().join('');if(seen.has(rk))return;seen.add(k);
+      res.push({r,parts:r.slice(1).map((x,i)=>tw(r[i],x)),sum:r.slice(1).reduce((s,x,i)=>s+tw(r[i],x),0)});return;}
+    left.forEach((x,i)=>perm([...cur,x],left.filter((_,j)=>j!==i)));})([],rest);
+  return res;}
+function tsBuild(){
+  const svg=$('ts-svg');svg.innerHTML='';const g=T.g;const ge=el('g',{},svg),gl=el('g',{},svg),gn=el('g',{},svg);
+  g.edges.forEach(([u,v,w])=>{const [x1,y1]=g.nodes[u],[x2,y2]=g.nodes[v];el('line',{id:'te'+ekey(u,v),class:'ed',x1,y1,x2,y2},ge);
+    if(g.w){let mx=(x1+x2)/2,my=(y1+y2)/2;const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);
+      // diagonals cross at centre: push labels along the line
+      if(Math.abs(mx-300)<40&&Math.abs(my-240)<60){mx=x1+dx*.3;my=y1+dy*.3;}
+      const lg=el('g',{class:'wl'},gl);el('rect',{x:mx-20,y:my-15,width:40,height:30,rx:8},lg);el('text',{x:mx,y:my},lg).textContent=w;}});
+  Object.entries(g.nodes).forEach(([n,[x,y]])=>{const gg=el('g',{class:'nd',id:'tn'+n},gn);el('circle',{cx:x,cy:y,r:32},gg);el('text',{x,y},gg).textContent=n;gg.addEventListener('click',()=>tsClick(n));});
+  $('ts-editbox').hidden=!g.w;
+  if(g.w){$('ts-edits').innerHTML=g.edges.map(([u,v,w],i)=>'<label for="tse'+i+'">'+u+' – '+v+'<input type="number" id="tse'+i+'" value="'+w+'" min="1" max="99"></label>').join('');
+    g.edges.forEach((_,i)=>$('tse'+i).onchange=e=>{const x=parseInt(e.target.value,10);if(isNaN(x))return;g.edges[i][2]=Math.max(1,Math.min(99,x));tsBuild();tsRender();});}
+  $('ts-title').textContent=g.title;$('ts-lead').textContent=g.lead;
+}
+function routeSum(r){let s=0;for(let i=1;i<r.length;i++)s+=tw(r[i-1],r[i]);return s;}
+function tsRender(){
+  const g=T.g,N=Object.keys(g.nodes),r=T.route,last=r[r.length-1],closed=r.length===N.length+1;
+  const used=new Set();for(let i=1;i<r.length;i++)used.add(ekey(r[i-1],r[i]));
+  const showSet=new Set();if(T.show){for(let i=1;i<T.show.length;i++)showSet.add(ekey(T.show[i-1],T.show[i]));}
+  g.edges.forEach(([u,v])=>{const k=ekey(u,v);$('te'+k).setAttribute('class','ed'+(T.show?(showSet.has(k)?' alt':' dim'):used.has(k)?' tour':''));});
+  N.forEach(n=>{let c='nd';if(r.includes(n))c+=' vis';if(n===last&&!closed)c+=' last';
+    if(!closed&&!T.show&&tw(last,n)!==null&&(!r.includes(n)||(n==='A'&&r.length===N.length)))c+=' can';
+    $('tn'+n).setAttribute('class',c);});
+  $('ts-route').textContent=r.join(' → ')+(g.w&&r.length>1?' = '+routeSum(r):'');
+  let fb=T.fb;
+  if(!fb&&closed){if(g.w){const all=tours(),best=Math.min(...all.map(t=>t.sum)),s=routeSum(r);
+      fb=s===best?['ok','해밀턴 순회 완성! 합 '+s+'은 가능한 순회 중 최소입니다. 외판원 문제 정답!']:['warn','해밀턴 순회 완성! 합은 '+s+'. 더 짧은 순회(최소 '+best+')가 있습니다. 다시 도전하거나 ‘모든 순회 보기’를 눌러 보세요.'];}
+    else fb=['ok','해밀턴 순회 완성! 모든 점을 정확히 한 번씩 지나 A로 돌아왔습니다.'];}
+  if(!fb&&!closed&&r.length>1){const opts=N.filter(n=>tw(last,n)!==null&&(!r.includes(n)||(n==='A'&&r.length===N.length)));
+    if(!opts.length)fb=['bad','막다른 길! 점 '+last+'에서 아직 안 간 점으로 이어진 길이 없습니다. 되돌려서 다른 순서를 시도해 보세요.'];}
+  $('ts-fb').innerHTML=fb?'<p class="fb '+fb[0]+'">'+fb[1]+'</p>':'';
+  $('ts-undo').disabled=r.length<2;
+}
+function tsClick(n){
+  const r=T.route,N=Object.keys(T.g.nodes),last=r[r.length-1];T.fb=null;T.show=null;
+  if(r.length===N.length+1)return;
+  if(tw(last,n)===null){T.fb=['bad',last+'와 '+n+' 사이에는 길이 없습니다.'];tsRender();return;}
+  if(n==='A'&&r.length<N.length){T.fb=['bad','아직 들르지 않은 점이 있어요. 모든 점을 들른 뒤 A로 돌아오세요.'];tsRender();return;}
+  if(r.includes(n)&&n!=='A'){T.fb=['bad','점 '+n+'는 이미 들렀습니다. 해밀턴 순회는 각 점을 한 번씩만 지납니다.'];tsRender();return;}
+  r.push(n);tsRender();
+}
+function tsList(){
+  const all=tours();T.fb=null;
+  if(!all.length){$('ts-list').innerHTML='<p class="fb bad">이 그래프에는 해밀턴 순회가 없습니다.</p>';return;}
+  const best=T.g.w?Math.min(...all.map(t=>t.sum)):null;
+  $('ts-list').innerHTML='<h3>가능한 해밀턴 순회 '+all.length+'가지 (거꾸로 도는 순회는 같은 것으로 셈) · 행을 누르면 그래프에 표시</h3><div class="tbl"><table><tr><th>순회</th>'+(T.g.w?'<th>가중치 합</th><th>합계</th>':'')+'</tr>'+
+    all.sort((a,b)=>a.sum-b.sum).map((t,i)=>'<tr data-i="'+i+'" style="cursor:pointer"'+(T.g.w&&t.sum===best?' class="best"':'')+'><td>'+t.r.join('→')+'</td>'+(T.g.w?'<td>'+t.parts.join(' + ')+'</td><td>'+t.sum+(t.sum===best?' 최소':'')+'</td>':'')+'</tr>').join('')+'</table></div>';
+  $('ts-list').querySelectorAll('tr[data-i]').forEach(tr=>tr.onclick=()=>{T.show=all[+tr.dataset.i].r;tsRender();});
+}
+function tsLoad(k){T.g=JSON.parse(JSON.stringify(TP[k]));T.route=['A'];T.show=null;T.fb=null;$('ts-list').innerHTML='';tsBuild();tsRender();}
+$('ts-undo').onclick=()=>{if(T.route.length>1)T.route.pop();T.fb=null;T.show=null;tsRender();};
+$('ts-clear').onclick=()=>{T.route=['A'];T.fb=null;T.show=null;tsRender();};
+$('ts-all').onclick=tsList;
+$('ts-preset').onchange=e=>tsLoad(e.target.value);
+function fact(n){let r=1n;for(let i=2n;i<=BigInt(n);i++)r*=i;return r;}
+function tsCount(){const n=+$('ts-n').value;$('ts-nv').textContent=n;const c=fact(n-1)/2n;
+  $('ts-cnt').textContent=c.toLocaleString('ko-KR')+'가지';
+  const sec=Number(c)/1e9;let t;
+  if(sec<1)t='1초에 10억 개를 확인하는 컴퓨터라면 1초도 안 걸립니다.';
+  else if(sec<3600)t='1초에 10억 개를 확인해도 약 '+Math.ceil(sec/60)+'분이 걸립니다.';
+  else if(sec<86400*365)t='1초에 10억 개를 확인해도 약 '+Math.ceil(sec/86400)+'일이 걸립니다.';
+  else{const y=sec/(86400*365);t='1초에 10억 개를 확인해도 약 '+(y<1e6?Math.round(y).toLocaleString('ko-KR'):y.toExponential(1).replace('e+',' × 10^'))+'년이 걸립니다. 그래서 유전 알고리즘·개미 집단 최적화 같은 AI 근사 기법을 씁니다.';}
+  $('ts-time').textContent=t;}
+$('ts-n').oninput=tsCount;tsCount();tsLoad('tsp');
+
+/* ================= ③ DIJKSTRA vs A* ================= */
+const COLS=26,ROWS=16;
+const AS={walls:new Set(),S:[3,8],G:[22,8],res:null,t:0,timer:null,tool:'wall',paint:null};
+const id=(c,r)=>r*COLS+c;
+function maps(k){const w=new Set();AS.S=[3,8];AS.G=[22,8];
+  if(k==='wall'){for(let r=2;r<14;r++)w.add(id(13,r));}
+  if(k==='cup'){for(let r=3;r<14;r++)w.add(id(17,r));for(let c=10;c<=17;c++){w.add(id(c,3));w.add(id(c,13));}AS.S=[4,8];AS.G=[23,8];}
+  if(k==='maze'){for(let r=0;r<12;r++)w.add(id(7,r));for(let r=4;r<16;r++)w.add(id(13,r));for(let r=0;r<12;r++)w.add(id(19,r));for(let c=13;c<17;c++)w.add(id(c,4));AS.S=[2,13];AS.G=[23,2];}
+  AS.walls=w;}
+function search(hw){
+  const [sc,sr]=AS.S,[gc,gr]=AS.G,s=id(sc,sr),g=id(gc,gr);
+  const gS=new Map([[s,0]]),par=new Map(),closedAt=new Map(),openAt=new Map([[s,0]]);
+  const h=n=>hw*(Math.abs(n%COLS-gc)+Math.abs(Math.floor(n/COLS)-gr));
+  let open=[s],t=0,found=false;
+  while(open.length){
+    let bi=0;for(let i=1;i<open.length;i++){const a=open[i],b=open[bi],fa=gS.get(a)+h(a),fb=gS.get(b)+h(b);if(fa<fb||(fa===fb&&(h(a)<h(b)||(h(a)===h(b)&&openAt.get(a)<openAt.get(b)))))bi=i;}
+    const cur=open.splice(bi,1)[0];if(closedAt.has(cur))continue;t++;closedAt.set(cur,t);
+    if(cur===g){found=true;break;}
+    const c=cur%COLS,r=Math.floor(cur/COLS);
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dc,dr])=>{const nc=c+dc,nr=r+dr;if(nc<0||nr<0||nc>=COLS||nr>=ROWS)return;const n=id(nc,nr);
+      if(AS.walls.has(n)||closedAt.has(n))return;const ng=gS.get(cur)+1;
+      if(!gS.has(n)||ng<gS.get(n)){gS.set(n,ng);par.set(n,cur);if(!openAt.has(n))openAt.set(n,t);open.push(n);}});
+  }
+  const path=[];if(found){let c=g;while(c!==s){path.push(c);c=par.get(c);}path.push(s);path.reverse();}
+  return {closedAt,openAt,path,found,total:t,len:found?path.length-1:null};
+}
+function asCompute(){AS.res={d:search(0),a:search(+$('as-h').value)};AS.t=0;}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+const CV={d:$('cv-d'),a:$('cv-a')};
+AS.resize=function(){Object.values(CV).forEach(cv=>{const w=cv.clientWidth||400,dpr=window.devicePixelRatio||1;cv.width=w*dpr;cv.height=w*ROWS/COLS*dpr;cv.style.height=(w*ROWS/COLS)+'px';});asDraw();};
+function asDraw(){
+  const C={bg:css('--card'),line:css('--line'),blue:css('--blue'),bs:css('--blue-soft'),or:css('--orange'),os:css('--orange-soft'),wall:css('--wall'),ink:css('--ink')};
+  ['d','a'].forEach(k=>{const cv=CV[k],x=cv.getContext('2d'),W=cv.width,H=cv.height,cs=W/COLS;if(!W)return;
+    x.fillStyle=C.bg;x.fillRect(0,0,W,H);const R=AS.res&&AS.res[k],t=AS.t;
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const n=id(c,r);let f=null;
+      if(AS.walls.has(n))f=C.wall;
+      else if(R){const ca=R.closedAt.get(n);if(ca!==undefined&&ca<=t)f=C.bs;else{const oa=R.openAt.get(n);if(oa!==undefined&&oa<t)f=C.os;}}
+      if(f){x.fillStyle=f;x.fillRect(c*cs,r*cs,cs,cs);}}
+    if(R&&R.found&&t>=R.total){x.strokeStyle=C.or;x.lineWidth=cs*.38;x.lineCap='round';x.lineJoin='round';x.beginPath();
+      R.path.forEach((n,i)=>{const px=(n%COLS+.5)*cs,py=(Math.floor(n/COLS)+.5)*cs;i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();}
+    x.strokeStyle=C.line;x.lineWidth=1;x.globalAlpha=.6;x.beginPath();
+    for(let c=1;c<COLS;c++){x.moveTo(c*cs,0);x.lineTo(c*cs,H);}for(let r=1;r<ROWS;r++){x.moveTo(0,r*cs);x.lineTo(W,r*cs);}x.stroke();x.globalAlpha=1;
+    [[AS.S,'S',C.blue],[AS.G,'G',C.or]].forEach(([p,l,col])=>{const cx=(p[0]+.5)*cs,cy=(p[1]+.5)*cs;x.fillStyle=col;x.beginPath();x.arc(cx,cy,cs*.46,0,7);x.fill();
+      x.fillStyle='#fff';x.font='700 '+Math.round(cs*.55)+'px '+css('--f');x.textAlign='center';x.textBaseline='middle';x.fillText(l,cx,cy+1);});
+    const st=$('st-'+k);
+    if(R){const shown=Math.min(t,R.total);st.innerHTML='<span>확정한 칸 <b>'+shown+'</b></span>'+(t>=R.total?(R.found?'<span>경로 길이 <b>'+R.len+'</b></span>':'<span><b>길 없음</b></span>'):'');}
+    else st.innerHTML='<span>탐색 전</span>';
+  });
+  if(AS.res&&AS.t>=Math.max(AS.res.d.total,AS.res.a.total)){const d=AS.res.d,a=AS.res.a;let m='';
+    if(!d.found)m='<p class="fb bad">S에서 G로 가는 길이 막혀 있습니다. 벽을 지워 보세요.</p>';
+    else{const pct=Math.round((1-a.total/d.total)*100);
+      m='<p class="fb ok">다익스트라는 '+d.total+'칸, A*는 '+a.total+'칸을 확정했습니다'+(pct>0?' (A*가 '+pct+'% 덜 탐색)':'')+'.</p>';
+      if(a.len>d.len)m+='<p class="fb bad">A*의 경로 길이 '+a.len+'가 최단 '+d.len+'보다 깁니다. h가 실제 남은 거리보다 커서(과대평가) 최단 경로 보장이 깨졌습니다.</p>';
+      else m+='<p class="fb warn">두 경로의 길이가 '+d.len+'(으)로 같습니다. 같은 최단 경로를 찾지만, A*는 h(n) 덕분에 엉뚱한 방향을 덜 살펴봅니다.</p>';}
+    $('as-fb').innerHTML=m;}else $('as-fb').innerHTML='';
+}
+function asStop(){if(AS.timer){clearInterval(AS.timer);AS.timer=null;}$('as-run').textContent='탐색 시작';}
+function asEnd(){return AS.res?Math.max(AS.res.d.total,AS.res.a.total):0;}
+$('as-run').onclick=()=>{if(AS.timer){asStop();return;}if(!AS.res||AS.t>=asEnd()){asCompute();}
+  $('as-run').textContent='일시 정지';AS.timer=setInterval(()=>{AS.t++;asDraw();if(AS.t>=asEnd())asStop();},+$('as-speed').value);};
+$('as-step').onclick=()=>{asStop();if(!AS.res||AS.t>=asEnd())asCompute();AS.t++;asDraw();};
+$('as-reset').onclick=()=>{asStop();AS.res=null;AS.t=0;asDraw();};
+$('as-speed').onchange=()=>{if(AS.timer){asStop();$('as-run').click();}};
+$('as-h').onchange=e=>{$('ast-name').textContent=e.target.value==='1'?'A* (h = 맨해튼 거리)':'A* (h = 맨해튼 × 3)';asStop();AS.res=null;AS.t=0;asDraw();};
+$('as-map').onchange=e=>{asStop();maps(e.target.value);AS.res=null;AS.t=0;asDraw();};
+$('as-tool').onchange=e=>AS.tool=e.target.value;
+function cellAt(cv,ev){const r=cv.getBoundingClientRect(),c=Math.floor((ev.clientX-r.left)/r.width*COLS),w=Math.floor((ev.clientY-r.top)/r.height*ROWS);return (c<0||w<0||c>=COLS||w>=ROWS)?null:[c,w];}
+function applyCell(p){if(!p)return;const n=id(p[0],p[1]);const isS=p[0]===AS.S[0]&&p[1]===AS.S[1],isG=p[0]===AS.G[0]&&p[1]===AS.G[1];
+  if(AS.tool==='wall'){if(isS||isG)return;if(AS.paint===null)AS.paint=!AS.walls.has(n);AS.paint?AS.walls.add(n):AS.walls.delete(n);}
+  else{if(AS.walls.has(n)||(AS.tool==='S'&&isG)||(AS.tool==='G'&&isS))return;AS[AS.tool]=p;}
+  asStop();AS.res=null;AS.t=0;asDraw();}
+Object.values(CV).forEach(cv=>{
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);AS.paint=null;applyCell(cellAt(cv,e));});
+  cv.addEventListener('pointermove',e=>{if(e.buttons&&AS.tool==='wall')applyCell(cellAt(cv,e));});
+  cv.addEventListener('pointerup',()=>AS.paint=null);
+});
+window.addEventListener('resize',()=>AS.resize());
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{asDraw();});}catch(e){}
+new MutationObserver(()=>asDraw()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+maps('wall');asCompute();AS.t=asEnd();AS.resize();
+
+document.addEventListener('keydown',e=>{if($('p-dij').hidden||/INPUT|SELECT/.test(e.target.tagName))return;
+  if(e.key==='ArrowRight')$('dj-next').click();if(e.key==='ArrowLeft')$('dj-prev').click();});
+// open on a meaningful frame: step 2 of the textbook example
+D.i=2;djRender();
+})();
+</script>
+</body>
+</html>

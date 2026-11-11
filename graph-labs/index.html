@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>그래프 알고리즘 실험실</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap">
+<style>
+:root{--bg:#F4F6F9;--card:#FFFFFF;--ink:#1B2533;--muted:#5A6676;--line:#CDD5DF;--blue:#2A66A8;--orange:#D9692A}
+@media (prefers-color-scheme: dark){:root{--bg:#12171E;--card:#1C232D;--ink:#ECEFF3;--muted:#9AA6B5;--line:#3A4553;--blue:#78B0EA;--orange:#F0A060;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,-apple-system,'Malgun Gothic',sans-serif;line-height:1.6}
+.wrap{max-width:900px;margin:0 auto;padding:40px max(16px,env(safe-area-inset-left,0px)) 56px}
+.eyebrow{margin:0;font-size:.8rem;font-weight:700;letter-spacing:.08em;color:var(--orange)}
+h1{margin:4px 0 8px;font-size:2rem;font-weight:900}
+.lead{margin:0 0 28px;color:var(--muted)}
+.list{display:grid;gap:14px}
+a.card{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+a.card:hover,a.card:focus-visible{border-color:var(--blue);outline:none}
+a.card h2{margin:0 0 4px;font-size:1.2rem;color:var(--blue)}
+a.card p{margin:0;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">인공지능공학과 · 그래프 단원</p>
+  <h1>그래프 알고리즘 실험실</h1>
+  <p class="lead">직접 눌러 보며 알고리즘이 한 단계씩 어떻게 움직이는지 확인하세요.</p>
+  <div class="list">
+    <a class="card" href="bfs-dfs-lab.html"><h2>BFS·DFS 탐색 실험실</h2><p>큐와 호출 스택으로 보는 너비 우선·깊이 우선 탐색, 미로에서 나란히 비교</p></a>
+    <a class="card" href="mst-lab.html"><h2>최소신장 트리 실험실</h2><p>프림·크루스칼로 최소신장 트리 만들기, 다익스트라와의 차이 비교</p></a>
+    <a class="card" href="dijkstra-lab.html"><h2>다익스트라 길찾기 실험실</h2><p>예제 7-14 단계별 풀이, 해밀턴 순회·외판원 문제, 다익스트라 vs A*</p></a>
+  </div>
+</div>
+</body>
+</html>

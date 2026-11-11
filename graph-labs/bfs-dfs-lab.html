@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BFS·DFS 탐색 실험실</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+/* Layout: graph-search lab — tab 1: board + notebook (queue/stack + pseudocode); tab 2: two maze boards side by side */
+:root{
+  --bg:#F4F6F9; --card:#FFFFFF; --ink:#1B2533; --muted:#5A6676; --line:#CDD5DF; --soft:#EEF2F7;
+  --blue:#2A66A8; --blue-soft:#DCE9F7; --orange:#D9692A; --orange-ink:#A9480F; --orange-soft:#FCE6D6;
+  --teal:#1F7A72; --teal-soft:#D8EFEC; --red:#C0392B; --red-soft:#F9E0DC; --green:#2C7A4B; --green-soft:#DDF0E4; --wall:#3B4656;
+  --f:'Noto Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Consolas,'Noto Sans KR',monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171E; --card:#1C232D; --ink:#ECEFF3; --muted:#9AA6B5; --line:#3A4553; --soft:#252E3A;
+  --blue:#78B0EA; --blue-soft:#1F3A57; --orange:#F0A060; --orange-ink:#F6B884; --orange-soft:#4A2D17;
+  --teal:#6FD0C4; --teal-soft:#183B37; --red:#F08A7E; --red-soft:#4A2421; --green:#7FCB9C; --green-soft:#1D3A29; --wall:#8E9AAB; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171E; --card:#1C232D; --ink:#ECEFF3; --muted:#9AA6B5; --line:#3A4553; --soft:#252E3A;
+  --blue:#78B0EA; --blue-soft:#1F3A57; --orange:#F0A060; --orange-ink:#F6B884; --orange-soft:#4A2D17;
+  --teal:#6FD0C4; --teal-soft:#183B37; --red:#F08A7E; --red-soft:#4A2421; --green:#7FCB9C; --green-soft:#1D3A29; --wall:#8E9AAB; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.55}
+.wrap{max-width:1200px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-size:.78rem;font-weight:700;letter-spacing:.08em;color:var(--orange-ink);margin:0}
+h1{font-size:2rem;font-weight:900;margin:2px 0 0;line-height:1.15;text-wrap:balance}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px}
+.tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-weight:700;padding:9px 14px;border-radius:10px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--blue);color:#fff}
+.grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
+.panel h2{font-size:1.15rem;margin:0 0 4px;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 10px;max-width:65ch}
+.seg{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;color:var(--muted);font:inherit;font-weight:700;padding:7px 14px;border-radius:9px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+svg.g{width:100%;height:auto;display:block}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:10px;padding:8px 12px;min-height:40px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn[aria-pressed="true"]{background:var(--orange-soft);border-color:var(--orange);color:var(--orange-ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:focus-visible,.tabs button:focus-visible,.seg button:focus-visible,select:focus-visible,canvas:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+select{font:inherit;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:10px;padding:7px 9px;min-height:40px}
+label.inl{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:.88rem}
+.sep{border-top:1px dashed var(--line);margin-top:12px;padding-top:12px}
+/* graph */
+.ed{stroke:var(--line);stroke-width:3;transition:stroke .3s,stroke-width .3s}
+.ed.tree{stroke:var(--blue);stroke-width:7}
+.ed.chk{stroke:var(--orange);stroke-width:6}
+.ed.back{stroke:var(--teal);stroke-width:6;stroke-dasharray:8 7}
+.ed.edit{cursor:pointer}
+.hit{stroke:transparent;stroke-width:24}
+.editing .hit{cursor:pointer}
+.nd circle.c{fill:var(--card);stroke:var(--muted);stroke-width:3;transition:fill .3s,stroke .3s}
+.nd text{fill:var(--ink);font:700 26px var(--f);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.nd.fr circle.c{fill:var(--orange-soft);stroke:var(--orange)}
+.nd.vis circle.c{fill:var(--blue);stroke:var(--blue)}
+.nd.vis text{fill:#fff}
+.nd.cur circle.c{fill:var(--orange);stroke:var(--orange)}
+.nd.cur text{fill:#fff}
+.nd .ring{fill:none;stroke:var(--orange);stroke-width:3;stroke-dasharray:5 5;opacity:0}
+.nd.start .ring{opacity:1}
+.nd.can{cursor:pointer}
+.nd.can circle.c{stroke-dasharray:5 4;stroke:var(--orange)}
+.nd.sel circle.c{stroke:var(--teal);stroke-width:6}
+.editing .nd{cursor:pointer}
+.ob circle{fill:var(--ink)}
+.ob text{fill:var(--card);font:700 15px var(--f);text-anchor:middle;dominant-baseline:central}
+.lv text{fill:var(--teal);font:700 16px var(--f);text-anchor:middle;dominant-baseline:central}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.82rem;color:var(--muted);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.lg{display:inline-block;width:14px;height:14px;border-radius:50%}
+.lgl{display:inline-block;width:22px;height:0;border-top:5px solid}
+/* notebook */
+.stephead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+.stepno{font-size:1.5rem;font-weight:900}
+.stepno small{font-size:1rem;color:var(--muted);font-weight:500}
+.pill{font-size:.78rem;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--blue-soft);color:var(--blue)}
+.msg{background:var(--soft);border-radius:12px;padding:12px 14px;margin:10px 0;max-width:65ch}
+h3{font-size:.8rem;letter-spacing:.06em;color:var(--muted);margin:14px 0 6px;display:flex;justify-content:space-between;gap:8px}
+h3 em{font-style:normal;font-weight:500;letter-spacing:0}
+.ds{display:flex;gap:6px;min-height:52px;align-items:center;padding:6px;border:2px solid var(--line);border-radius:12px;background:var(--soft);overflow-x:auto}
+.ds.queue{border-left-style:dashed;border-right-style:dashed}
+.ds.stack{flex-direction:column-reverse;align-items:stretch;min-height:0;border-top-color:transparent;border-radius:0 0 12px 12px;max-width:260px}
+.ds .it{min-width:42px;height:38px;border-radius:9px;background:var(--orange-soft);border:1.5px solid var(--orange);color:var(--orange-ink);font:700 1.05rem var(--f);display:flex;align-items:center;justify-content:center;padding:0 10px;flex:none}
+.ds .it.hot{background:var(--orange);color:#fff}
+.ds .it.out{background:var(--card);border-style:dashed;color:var(--muted);text-decoration:line-through}
+.ds.stack .it{justify-content:flex-start;font-family:var(--mono);font-size:.95rem}
+.ds .empty{color:var(--muted);font-size:.88rem;padding:0 6px}
+.ends{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:3px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{border:1px solid var(--blue);background:var(--blue-soft);color:var(--ink);border-radius:9px;padding:3px 10px;font-weight:700;font-variant-numeric:tabular-nums}
+.arrow{color:var(--muted)}
+pre.code{font-family:var(--mono);font-size:.86rem;line-height:1.7;margin:0;padding:10px 0;background:var(--soft);border-radius:12px;overflow-x:auto}
+pre.code span{display:block;padding:0 14px;border-left:4px solid transparent;white-space:pre}
+pre.code span.on{background:var(--orange-soft);border-left-color:var(--orange);color:var(--orange-ink);font-weight:700}
+.fb{border-radius:12px;padding:10px 14px;font-weight:500;margin:8px 0}
+.fb.ok{background:var(--green-soft);color:var(--green)}
+.fb.bad{background:var(--red-soft);color:var(--red)}
+.fb.warn{background:var(--orange-soft);color:var(--orange-ink)}
+.done{border:2px solid var(--blue);border-radius:14px;padding:12px 14px;background:var(--blue-soft);margin-top:10px}
+.done p{margin:2px 0}
+/* maze */
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.duo{grid-template-columns:minmax(0,1fr)}}
+.board h3{margin:0 0 6px;font-size:.9rem;letter-spacing:0;color:var(--ink)}
+canvas{width:100%;height:auto;display:block;border-radius:10px;touch-action:none;cursor:crosshair}
+.stats{display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums;color:var(--muted);font-size:.88rem;margin-top:6px}
+.stats b{color:var(--ink);font-size:1.1rem}
+.tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.tips{grid-template-columns:minmax(0,1fr)}}
+.tip{border-top:3px solid var(--line);padding-top:8px;color:var(--muted);font-size:.9rem}
+.tip b{display:block;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">그래프 탐색 · 모든 정점을 빠짐없이 방문하기</p>
+      <h1>BFS·DFS 탐색 실험실</h1>
+    </div>
+    <div class="tabs" role="tablist" aria-label="실험 선택">
+      <button role="tab" id="tab-g" aria-selected="true" data-p="p-g">① 그래프에서 한 단계씩</button>
+      <button role="tab" id="tab-m" aria-selected="false" data-p="p-m">② 미로에서 나란히 비교</button>
+    </div>
+  </header>
+
+  <section id="p-g" role="tabpanel" aria-labelledby="tab-g">
+    <div class="grid">
+      <div class="panel">
+        <div class="stephead" style="align-items:center">
+          <h2 id="g-title">무방향 그래프 · 정점 8개</h2>
+          <div class="seg" role="group" aria-label="탐색 방법">
+            <button id="m-bfs" aria-pressed="true" data-m="bfs">BFS 너비 우선</button>
+            <button id="m-dfs" aria-pressed="false" data-m="dfs">DFS 깊이 우선</button>
+          </div>
+        </div>
+        <p class="lead" id="g-lead">이웃이 여러 개면 번호가 작은 정점부터 봅니다. 정점 옆 검은 숫자는 방문 순서입니다.</p>
+        <svg class="g" id="svg" viewBox="0 0 700 560" role="img" aria-label="탐색할 그래프"></svg>
+        <div class="legend" id="legend"></div>
+        <div class="ctl">
+          <button class="btn" id="b-first">⏮ 처음</button>
+          <button class="btn" id="b-prev">◀ 이전</button>
+          <button class="btn primary" id="b-next">다음 ▶</button>
+          <button class="btn" id="b-play" aria-pressed="false">자동 재생</button>
+          <button class="btn" id="b-pred" aria-pressed="false">다음 방문 맞히기</button>
+        </div>
+        <div class="ctl sep">
+          <label class="inl" for="preset">그래프
+            <select id="preset"><option value="a">기본 그래프 (정점 8개)</option><option value="tree">이진 트리 (정점 7개)</option><option value="cyc">고리가 많은 그래프 (A~H)</option><option value="dis">두 조각으로 나뉜 그래프</option></select>
+          </label>
+          <label class="inl" for="start">시작 정점 <select id="start"></select></label>
+          <button class="btn" id="b-edit" aria-pressed="false">간선 편집</button>
+        </div>
+      </div>
+      <div class="panel" aria-live="polite">
+        <div class="stephead"><div class="stepno" id="no"></div><span class="pill" id="mode-pill"></span></div>
+        <div id="fb"></div>
+        <p class="msg" id="msg"></p>
+        <h3><span id="ds-name">큐 (Queue)</span><em id="ds-rule">먼저 들어온 정점이 먼저 나감</em></h3>
+        <div id="ds"></div>
+        <h3>방문 순서</h3>
+        <div class="chips" id="order"></div>
+        <h3>의사코드 <em>지금 실행 중인 줄 강조</em></h3>
+        <pre class="code" id="code"></pre>
+        <div id="done"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="p-m" role="tabpanel" aria-labelledby="tab-m" hidden>
+    <div class="panel">
+      <h2>같은 미로, 다른 탐색 순서</h2>
+      <p class="lead">BFS는 물결처럼 가까운 칸부터 퍼지고, DFS는 한 방향으로 끝까지 파고들다 막히면 되돌아옵니다. 지도를 눌러 끌면 벽을 그리거나 지웁니다.</p>
+      <div class="duo">
+        <div class="board"><h3>BFS 너비 우선 (큐)</h3><canvas id="cv-b" aria-label="BFS 미로 탐색"></canvas><div class="stats" id="st-b"></div></div>
+        <div class="board"><h3>DFS 깊이 우선 (스택)</h3><canvas id="cv-d" aria-label="DFS 미로 탐색"></canvas><div class="stats" id="st-d"></div></div>
+      </div>
+      <div class="legend" style="margin-top:10px">
+        <span><i class="lg" style="background:var(--blue-soft);border:1px solid var(--blue);border-radius:3px"></i>방문한 칸 (진할수록 늦게 방문)</span>
+        <span><i class="lg" style="background:var(--orange-soft);border:1px solid var(--orange);border-radius:3px"></i>큐·스택에서 대기 중</span>
+        <span><i class="lg" style="background:var(--orange);border-radius:3px"></i>찾은 경로</span>
+        <span><i class="lg" style="background:var(--wall);border-radius:3px"></i>벽</span>
+      </div>
+      <div class="ctl">
+        <button class="btn primary" id="mz-run">탐색 시작</button>
+        <button class="btn" id="mz-step">한 칸씩</button>
+        <button class="btn" id="mz-reset">탐색 지우기</button>
+        <label class="inl" for="mz-tool">도구
+          <select id="mz-tool"><option value="wall">벽 그리기/지우기</option><option value="S">출발 S 옮기기</option><option value="G">목적지 G 옮기기</option></select>
+        </label>
+        <label class="inl" for="mz-map">지도
+          <select id="mz-map"><option value="maze">미로</option><option value="open">빈 방</option><option value="rooms">방 여러 개</option></select>
+        </label>
+        <label class="inl" for="mz-speed">속도
+          <select id="mz-speed"><option value="60">느리게</option><option value="22" selected>보통</option><option value="5">빠르게</option></select>
+        </label>
+      </div>
+      <div id="mz-fb" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <div class="tips">
+    <div class="tip"><b>다음 방문 맞히기</b>켜면 다음에 방문할 정점을 그래프에서 직접 누릅니다. BFS는 큐의 맨 앞, DFS는 지금 정점의 방문 안 한 이웃 중 번호가 가장 작은 정점입니다.</div>
+    <div class="tip"><b>간선 편집</b>켜고 정점 두 개를 차례로 누르면 간선이 생기거나 없어집니다. 그래프가 바뀌면 처음부터 다시 계산합니다.</div>
+    <div class="tip"><b>확인해 볼 것</b>BFS의 레벨(초록 숫자)은 시작점에서 거쳐 가는 간선 수의 최솟값입니다. 미로 탭에서 BFS 경로가 늘 DFS 경로보다 짧거나 같은지 확인해 보세요.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+const NS='http://www.w3.org/2000/svg',$=id=>document.getElementById(id);
+function el(t,a,p){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);if(p)p.appendChild(n);return n;}
+document.querySelectorAll('[role=tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[role=tab]').forEach(x=>{x.setAttribute('aria-selected',x===b);$(x.dataset.p).hidden=x!==b;});if(b.dataset.p==='p-m')MZ.resize();});
+
+/* ============ ① graph ============ */
+const PRE={
+  a:{title:'무방향 그래프 · 정점 8개',nodes:{1:[350,60],2:[185,175],3:[515,175],4:[90,330],5:[270,330],6:[430,330],7:[610,330],8:[350,490]},
+     edges:[[1,2],[1,3],[2,4],[2,5],[3,6],[3,7],[4,8],[5,8],[6,8],[7,8]]},
+  tree:{title:'이진 트리 · 정점 7개',nodes:{1:[350,70],2:[190,230],3:[510,230],4:[100,420],5:[280,420],6:[420,420],7:[600,420]},
+     edges:[[1,2],[1,3],[2,4],[2,5],[3,6],[3,7]]},
+  cyc:{title:'고리가 많은 그래프 · A~H',nodes:{A:[120,90],B:[350,60],C:[580,90],D:[100,300],E:[300,270],F:[470,300],G:[230,480],H:[560,470]},
+     edges:[['A','B'],['A','D'],['A','E'],['B','C'],['B','E'],['C','F'],['D','E'],['D','G'],['E','F'],['E','G'],['F','H'],['G','H']]},
+  dis:{title:'두 조각으로 나뉜 그래프',nodes:{1:[110,110],2:[300,90],3:[200,280],4:[90,450],5:[300,430],6:[480,160],7:[620,290],8:[500,450]},
+     edges:[[1,2],[1,3],[2,3],[3,4],[3,5],[6,7],[7,8],[6,8]]}
+};
+const G={g:null,mode:'bfs',start:null,steps:[],i:0,pred:false,edit:false,sel:null,fb:null,timer:null};
+const cmpN=(a,b)=>(isNaN(a)?a.localeCompare(b):a-b);
+const nodesOf=()=>Object.keys(G.g.nodes).sort(cmpN);
+const ek=(a,b)=>cmpN(String(a),String(b))<0?a+'-'+b:b+'-'+a;
+function adj(){const A={};nodesOf().forEach(n=>A[n]=[]);G.g.edges.forEach(([u,v])=>{A[u].push(String(v));A[v].push(String(u));});for(const n in A)A[n].sort(cmpN);return A;}
+
+function runBFS(s){
+  const A=adj(),vis=new Set([s]),lvl={[s]:0},par={},order=[],q=[s],tree=[],steps=[];
+  steps.push({type:'init',cur:null,ds:[...q],dsIn:[s],dsOut:null,order:[],vis:[...vis],tree:[],chk:[],lvl:{...lvl},code:[0],
+    msg:'시작 정점 '+s+'를 방문 표시하고 큐에 넣습니다. 레벨(거리) 0입니다.'});
+  while(q.length){
+    const u=q.shift();order.push(u);const added=[],chk=[];
+    A[u].forEach(v=>{chk.push(ek(u,v));if(!vis.has(v)){vis.add(v);lvl[v]=lvl[u]+1;par[v]=u;q.push(v);added.push(v);tree.push(ek(u,v));}});
+    const seen=A[u].filter(v=>!added.includes(v));
+    let msg='큐 맨 앞의 '+u+'를 꺼내 방문합니다. ';
+    msg+=added.length?'방문 안 한 이웃 '+added.join(', ')+'을(를) 번호 순으로 큐 뒤에 넣습니다 (레벨 '+(lvl[u]+1)+').':'새로 넣을 이웃이 없습니다.';
+    if(seen.length)msg+=' 이웃 '+seen.join(', ')+'은(는) 이미 방문 표시가 되어 있어 건너뜁니다.';
+    steps.push({type:'deq',cur:u,ds:[...q],dsIn:added,dsOut:u,order:[...order],vis:[...vis],tree:[...tree],chk,lvl:{...lvl},code:added.length?[2,3,4,5]:[2,3],msg});
+  }
+  return finish(steps,order);
+}
+function runDFS(s){
+  const A=adj(),vis=new Set([s]),order=[s],tree=[],stack=[[s,0]],steps=[],lvl={};
+  steps.push({type:'visit',cur:s,ds:[s],order:[...order],vis:[...vis],tree:[],chk:[],code:[0,1],msg:'DFS('+s+')를 호출합니다. '+s+'를 방문 표시합니다.'});
+  while(stack.length){
+    const top=stack[stack.length-1],u=top[0],nb=A[u];let moved=false;const skipped=[];
+    while(top[1]<nb.length){const v=nb[top[1]++];
+      if(!vis.has(v)){vis.add(v);order.push(v);tree.push(ek(u,v));stack.push([v,0]);
+        steps.push({type:'down',cur:v,from:u,ds:stack.map(f=>f[0]),order:[...order],vis:[...vis],tree:[...tree],chk:[ek(u,v)],code:[2,3,4],
+          msg:(skipped.length?'이웃 '+skipped.join(', ')+'은(는) 이미 방문했으므로 건너뛰고, ':'')+u+'의 방문 안 한 이웃 중 번호가 가장 작은 '+v+'로 내려갑니다. DFS('+v+') 호출 → '+v+' 방문.'});
+        moved=true;break;}
+      skipped.push(v);}
+    if(!moved){stack.pop();const back=stack.length?stack[stack.length-1][0]:null;
+      steps.push({type:'back',cur:back,from:u,ds:stack.map(f=>f[0]),popped:u,order:[...order],vis:[...vis],tree:[...tree],chk:back?[ek(back,u)]:[],code:[5],
+        msg:u+'의 이웃은 모두 방문했습니다. DFS('+u+')가 끝나 '+(back?back+'(으)로 되돌아갑니다 (백트래킹).':'시작점까지 모두 되돌아왔습니다.')});}
+  }
+  return finish(steps,order);
+}
+function finish(steps,order){
+  const N=nodesOf(),miss=N.filter(n=>!order.includes(n));
+  const last=steps[steps.length-1];last.done=true;last.miss=miss;return steps;
+}
+function compute(){G.steps=G.mode==='bfs'?runBFS(G.start):runDFS(G.start);G.i=0;G.fb=null;}
+
+function build(){
+  const svg=$('svg');svg.innerHTML='';const g=G.g,ge=el('g',{},svg),gh=el('g',{},svg),gn=el('g',{},svg);
+  g.edges.forEach(([u,v])=>{const [x1,y1]=g.nodes[u],[x2,y2]=g.nodes[v],k=ek(String(u),String(v));
+    el('line',{id:'e'+k,class:'ed',x1,y1,x2,y2},ge);const h=el('line',{class:'hit',x1,y1,x2,y2},gh);h.addEventListener('click',()=>{if(G.edit)toggleEdge(String(u),String(v));});});
+  Object.entries(g.nodes).forEach(([n,[x,y]])=>{const gg=el('g',{class:'nd',id:'n'+n},gn);
+    el('circle',{class:'ring',cx:x,cy:y,r:42},gg);el('circle',{class:'c',cx:x,cy:y,r:32},gg);el('text',{x,y},gg).textContent=n;
+    const ob=el('g',{class:'ob',id:'o'+n},gg);el('circle',{cx:x+28,cy:y-28,r:14},ob);el('text',{x:x+28,y:y-28},ob);
+    const lv=el('g',{class:'lv',id:'l'+n},gg);el('text',{x:x,y:y+50},lv);
+    gg.addEventListener('click',()=>nodeClick(n));});
+  $('start').innerHTML=nodesOf().map(n=>'<option'+(n===G.start?' selected':'')+'>'+n+'</option>').join('');
+  $('g-title').textContent=g.title;
+}
+const CODE={
+  bfs:['큐에 시작점 s를 넣고 s를 방문 표시','while 큐가 비어 있지 않으면:','    u = 큐의 맨 앞에서 꺼내기   ← 방문','    for u의 이웃 v (번호 순):','        if v를 방문 표시 안 했으면:','            v를 방문 표시, 큐의 뒤에 넣기'],
+  dfs:['DFS(u):','    u를 방문 표시                ← 방문','    for u의 이웃 v (번호 순):','        if v를 방문 표시 안 했으면:','            DFS(v)               ← 내려가기','    끝나면 호출한 곳으로 되돌아감   ← 백트래킹']
+};
+function render(){
+  const st=G.steps[G.i],N=nodesOf(),bfs=G.mode==='bfs',last=G.steps.length-1;
+  $('svg').classList.toggle('editing',G.edit);
+  G.g.edges.forEach(([u,v])=>{const k=ek(String(u),String(v));let c='ed';
+    if(st.chk.includes(k)){c+=st.type==='back'?' back':' chk';}else if(st.tree.includes(k))c+=' tree';
+    $('e'+k).setAttribute('class',c);});
+  let nextN=null;if(!st.done&&G.pred){const nx=G.steps.slice(G.i+1).find(s=>s.type==='deq'||s.type==='down');nextN=nx?nx.cur:null;}
+  const inDs=new Set(bfs?st.ds:[]),stackSet=new Set(bfs?[]:st.ds);
+  N.forEach(n=>{let c='nd';const visited=bfs?st.order.includes(n):st.vis.includes(n);
+    if(bfs&&inDs.has(n))c+=' fr';else if(visited)c+=' vis';
+    if(!bfs&&stackSet.has(n)&&n!==st.cur)c+=' fr';
+    if(n===st.cur&&st.type!=='init')c=c.replace(' vis','').replace(' fr','')+' cur';
+    if(n===G.start)c+=' start';if(G.sel===n)c+=' sel';
+    if(G.pred&&!st.done&&!(bfs?st.order.includes(n):st.vis.includes(n)))c+=' can';
+    $('n'+n).setAttribute('class',c);
+    const oi=st.order.indexOf(n);$('o'+n).style.display=oi<0?'none':'';$('o'+n).querySelector('text').textContent=oi+1;
+    const lv=$('l'+n);if(bfs&&st.lvl[n]!==undefined){lv.style.display='';lv.querySelector('text').textContent='레벨 '+st.lvl[n];}else lv.style.display='none';});
+  $('no').innerHTML=(G.i===0?'시작':'단계 '+G.i)+' <small>/ '+last+'</small>';
+  $('mode-pill').textContent=(bfs?'BFS':'DFS')+' · 시작 '+G.start;
+  $('fb').innerHTML=G.fb?'<p class="fb '+G.fb[0]+'">'+G.fb[1]+'</p>':'';
+  $('msg').textContent=st.msg+(G.pred&&!st.done?' — 다음에 방문할 정점을 그래프에서 눌러 보세요.':'');
+  // data structure
+  $('ds-name').textContent=bfs?'큐 (Queue)':'스택 (재귀 호출 스택)';
+  $('ds-rule').textContent=bfs?'앞에서 꺼내고 뒤에 넣음 · 선입선출':'맨 위에서 넣고 꺼냄 · 후입선출';
+  let h='';
+  if(bfs){const items=(st.dsOut?['<div class="it out">'+st.dsOut+'</div>']:[]).concat(st.ds.map(x=>'<div class="it'+(st.dsIn.includes(x)?' hot':'')+'">'+x+'</div>'));
+    h='<div class="ds queue">'+(items.length?items.join(''):'<span class="empty">비어 있음 → 탐색 끝</span>')+'</div><div class="ends"><span>← 앞 (꺼내는 쪽)</span><span>뒤 (넣는 쪽) →</span></div>';}
+  else{const items=st.ds.map((x,j)=>'<div class="it'+(j===st.ds.length-1?' hot':'')+'">DFS('+x+')</div>');
+    if(st.popped)items.push('<div class="it out">DFS('+st.popped+')</div>');
+    h='<div class="ds stack">'+(items.length?items.join(''):'<span class="empty">비어 있음 → 탐색 끝</span>')+'</div><div class="ends" style="max-width:260px"><span>↑ 맨 위 = 지금 실행 중</span></div>';}
+  $('ds').innerHTML=h;
+  $('order').innerHTML=st.order.length?st.order.map(x=>'<span class="chip">'+x+'</span>').join('<span class="arrow">→</span>'):'<span class="arrow">아직 없음</span>';
+  $('code').innerHTML=CODE[G.mode].map((l,j)=>'<span'+(st.code.includes(j)?' class="on"':'')+'>'+l.replace(/</g,'&lt;')+'</span>').join('');
+  let d='';
+  if(st.done){
+    d='<div class="done"><p><b>탐색 끝!</b> 방문 순서: '+st.order.join(' → ')+'</p><p>파란 간선만 모으면 '+(bfs?'BFS':'DFS')+' 신장 트리가 됩니다 (간선 '+st.tree.length+'개).</p>'+
+      (bfs?'<p>레벨 = 시작점에서 지나는 간선 수의 최솟값 (가중치 없는 그래프의 최단 거리)</p>':'')+'</div>';
+    if(st.miss.length)d+='<p class="fb warn">정점 '+st.miss.join(', ')+'은(는) 시작점과 이어진 길이 없어 방문하지 못했습니다. 그래프가 여러 조각이면, 방문 안 한 정점에서 탐색을 다시 시작해야 합니다 (연결 요소 찾기).</p>';
+    const other=(G.mode==='bfs'?runDFS:runBFS)(G.start),oo=other[other.length-1].order;
+    d+='<p class="fb ok">비교: 같은 그래프에서 '+(bfs?'DFS':'BFS')+'의 방문 순서는 '+oo.join(' → ')+'입니다.</p>';
+  }
+  $('done').innerHTML=d;
+  $('b-prev').disabled=$('b-first').disabled=G.i===0;$('b-next').disabled=!!st.done;
+}
+function nodeClick(n){
+  if(G.edit){if(G.sel===null){G.sel=n;G.fb=['warn','정점 '+n+' 선택. 이을(또는 끊을) 다른 정점을 누르세요.'];}else{if(G.sel!==n)toggleEdge(G.sel,n);G.sel=null;}render();return;}
+  if(!G.pred)return;const st=G.steps[G.i];if(st.done)return;
+  const j=G.steps.findIndex((s,k)=>k>G.i&&(s.type==='deq'||s.type==='down'));
+  if(j<0){G.fb=['warn','더 방문할 정점이 없습니다. 다음 ▶을 눌러 마무리하세요.'];render();return;}
+  const ans=G.steps[j].cur;
+  if(n===ans){G.fb=['ok','정답! 다음 방문은 '+n+'입니다. '+(G.mode==='bfs'?'큐의 맨 앞이었어요.':'지금 정점의 방문 안 한 이웃 중 번호가 가장 작아요.')];G.i=j;}
+  else G.fb=['bad',n+'가 아닙니다. '+(G.mode==='bfs'?'큐의 맨 앞을 보세요.':'백트래킹까지 생각해서, 스택 맨 위 정점의 방문 안 한 이웃을 찾아보세요.')];
+  render();
+}
+function toggleEdge(a,b){const i=G.g.edges.findIndex(([u,v])=>ek(String(u),String(v))===ek(a,b));
+  if(i>=0){G.g.edges.splice(i,1);G.fb=['warn','간선 '+a+'–'+b+'를 지웠습니다.'];}else{G.g.edges.push([a,b]);G.fb=['ok','간선 '+a+'–'+b+'를 만들었습니다.'];}
+  stop();const keep=G.fb;compute();G.fb=keep;build();render();}
+function stop(){if(G.timer){clearInterval(G.timer);G.timer=null;}$('b-play').setAttribute('aria-pressed','false');$('b-play').textContent='자동 재생';}
+function legend(){const bfs=G.mode==='bfs';$('legend').innerHTML=
+  '<span><i class="lg" style="background:var(--orange)"></i>지금 방문</span><span><i class="lg" style="background:var(--orange-soft);border:2px solid var(--orange)"></i>'+(bfs?'큐에서 대기':'스택에 있음')+'</span><span><i class="lg" style="background:var(--blue)"></i>방문 완료</span><span><i class="lgl" style="border-color:var(--blue)"></i>탐색 트리</span>'+(bfs?'':'<span><i class="lgl" style="border-color:var(--teal);border-top-style:dashed"></i>되돌아가는 길</span>');}
+function load(k){G.g=JSON.parse(JSON.stringify(PRE[k]));G.g.edges=G.g.edges.map(e=>e.map(String));G.start=nodesOf()[0];G.sel=null;stop();compute();build();render();}
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{G.mode=b.dataset.m;document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));stop();compute();legend();render();});
+$('b-next').onclick=()=>{stop();G.fb=null;if(G.i<G.steps.length-1){G.i++;render();}};
+$('b-prev').onclick=()=>{stop();G.fb=null;if(G.i>0){G.i--;render();}};
+$('b-first').onclick=()=>{stop();G.fb=null;G.i=0;render();};
+$('b-play').onclick=()=>{if(G.timer){stop();return;}if(G.steps[G.i].done)G.i=0;G.fb=null;render();$('b-play').setAttribute('aria-pressed','true');$('b-play').textContent='일시 정지';
+  G.timer=setInterval(()=>{if(G.i<G.steps.length-1){G.i++;render();}else stop();},1300);};
+$('b-pred').onclick=e=>{G.pred=!G.pred;e.currentTarget.setAttribute('aria-pressed',G.pred);if(G.pred&&G.edit){G.edit=false;$('b-edit').setAttribute('aria-pressed','false');}stop();G.fb=null;render();};
+$('b-edit').onclick=e=>{G.edit=!G.edit;G.sel=null;e.currentTarget.setAttribute('aria-pressed',G.edit);if(G.edit&&G.pred){G.pred=false;$('b-pred').setAttribute('aria-pressed','false');}
+  G.fb=G.edit?['warn','정점 두 개를 차례로 누르면 간선이 생기거나 없어집니다. 간선을 직접 눌러 지울 수도 있습니다.']:null;render();};
+$('preset').onchange=e=>load(e.target.value);
+$('start').onchange=e=>{G.start=e.target.value;stop();compute();render();};
+document.addEventListener('keydown',e=>{if($('p-g').hidden||/SELECT|INPUT/.test(e.target.tagName))return;if(e.key==='ArrowRight')$('b-next').click();if(e.key==='ArrowLeft')$('b-prev').click();});
+load('a');legend();G.i=3;render();
+
+/* ============ ② maze ============ */
+const COLS=25,ROWS=15,cid=(c,r)=>r*COLS+c;
+const MZ={walls:new Set(),S:[2,7],G:[22,7],res:null,t:0,timer:null,tool:'wall',paint:null};
+function maps(k){const w=new Set();MZ.S=[2,7];MZ.G=[22,7];
+  if(k==='maze'){for(let r=0;r<11;r++)w.add(cid(6,r));for(let r=4;r<15;r++)w.add(cid(12,r));for(let r=0;r<11;r++)w.add(cid(18,r));for(let c=12;c<16;c++)w.add(cid(c,4));MZ.S=[2,12];MZ.G=[22,2];}
+  if(k==='rooms'){for(let r=0;r<15;r++){if(r!==3&&r!==11)w.add(cid(8,r));if(r!==7)w.add(cid(16,r));}for(let c=0;c<8;c++)if(c!==4)w.add(cid(c,7));for(let c=17;c<25;c++)if(c!==20)w.add(cid(c,7));MZ.S=[2,2];MZ.G=[22,12];}
+  MZ.walls=w;}
+const DIRS=[[1,0],[0,1],[-1,0],[0,-1]];
+function bfs(){const s=cid(...MZ.S),g=cid(...MZ.G),vis=new Map([[s,0]]),par=new Map(),inAt=new Map([[s,0]]);let q=[s],t=0,found=false;
+  while(q.length){const u=q.shift();t++;vis.set(u,t);if(u===g){found=true;break;}const c=u%COLS,r=Math.floor(u/COLS);
+    DIRS.forEach(([dc,dr])=>{const nc=c+dc,nr=r+dr;if(nc<0||nr<0||nc>=COLS||nr>=ROWS)return;const n=cid(nc,nr);if(MZ.walls.has(n)||inAt.has(n))return;inAt.set(n,t);par.set(n,u);q.push(n);});}
+  return pack(s,g,vis,inAt,par,found,t);}
+function dfs(){const s=cid(...MZ.S),g=cid(...MZ.G),vis=new Map(),par=new Map(),inAt=new Map([[s,0]]);let st=[s],t=0,found=false;
+  while(st.length){const u=st.pop();if(vis.has(u))continue;t++;vis.set(u,t);if(u===g){found=true;break;}const c=u%COLS,r=Math.floor(u/COLS);
+    // push in reverse so that the first direction (right) is explored first
+    [...DIRS].reverse().forEach(([dc,dr])=>{const nc=c+dc,nr=r+dr;if(nc<0||nr<0||nc>=COLS||nr>=ROWS)return;const n=cid(nc,nr);if(MZ.walls.has(n)||vis.has(n))return;par.set(n,u);inAt.set(n,t);st.push(n);});}
+  return pack(s,g,vis,inAt,par,found,t);}
+function pack(s,g,vis,inAt,par,found,total){const path=[];if(found){let c=g;while(c!==s){path.push(c);c=par.get(c);}path.push(s);path.reverse();}return {vis,inAt,path,found,total,len:found?path.length-1:null};}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function mix(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const A=p(a),B=p(b);return 'rgb('+A.map((x,i)=>Math.round(x+(B[i]-x)*t)).join(',')+')';}
+const CV={b:$('cv-b'),d:$('cv-d')};
+MZ.resize=function(){Object.values(CV).forEach(cv=>{const w=cv.clientWidth||400,dpr=window.devicePixelRatio||1;cv.width=w*dpr;cv.height=w*ROWS/COLS*dpr;cv.style.height=(w*ROWS/COLS)+'px';});draw();};
+function compute2(){MZ.res={b:bfs(),d:dfs()};MZ.t=0;}
+const endT=()=>MZ.res?Math.max(MZ.res.b.total,MZ.res.d.total):0;
+function draw(){
+  const C={bg:css('--card'),line:css('--line'),blue:css('--blue'),bs:css('--blue-soft'),or:css('--orange'),os:css('--orange-soft'),wall:css('--wall')};
+  ['b','d'].forEach(k=>{const cv=CV[k],x=cv.getContext('2d'),W=cv.width,H=cv.height,cs=W/COLS;if(!W)return;x.fillStyle=C.bg;x.fillRect(0,0,W,H);
+    const R=MZ.res&&MZ.res[k],t=MZ.t,tot=R?R.total:1;
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const n=cid(c,r);let f=null;
+      if(MZ.walls.has(n))f=C.wall;else if(R){const va=R.vis.get(n);if(va!==undefined&&va<=t)f=(C.bs[0]==='#'&&C.blue[0]==='#')?mix(C.bs,C.blue,.55*va/tot):C.bs;else{const ia=R.inAt.get(n);if(ia!==undefined&&ia<t)f=C.os;}}
+      if(f){x.fillStyle=f;x.fillRect(c*cs,r*cs,cs,cs);}}
+    if(R&&R.found&&t>=R.total){x.strokeStyle=C.or;x.lineWidth=cs*.36;x.lineCap='round';x.lineJoin='round';x.beginPath();R.path.forEach((n,i)=>{const px=(n%COLS+.5)*cs,py=(Math.floor(n/COLS)+.5)*cs;i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();}
+    x.strokeStyle=C.line;x.globalAlpha=.55;x.lineWidth=1;x.beginPath();for(let c=1;c<COLS;c++){x.moveTo(c*cs,0);x.lineTo(c*cs,H);}for(let r=1;r<ROWS;r++){x.moveTo(0,r*cs);x.lineTo(W,r*cs);}x.stroke();x.globalAlpha=1;
+    [[MZ.S,'S',C.blue],[MZ.G,'G',C.or]].forEach(([p,l,col])=>{const cx=(p[0]+.5)*cs,cy=(p[1]+.5)*cs;x.fillStyle=col;x.beginPath();x.arc(cx,cy,cs*.46,0,7);x.fill();x.fillStyle='#fff';x.font='700 '+Math.round(cs*.55)+'px '+css('--f');x.textAlign='center';x.textBaseline='middle';x.fillText(l,cx,cy+1);});
+    $('st-'+k).innerHTML=R?'<span>방문한 칸 <b>'+Math.min(t,R.total)+'</b></span>'+(t>=R.total?(R.found?'<span>경로 길이 <b>'+R.len+'</b></span>':'<span><b>길 없음</b></span>'):''):'<span>탐색 전</span>';});
+  let m='';
+  if(MZ.res&&MZ.t>=endT()){const b=MZ.res.b,d=MZ.res.d;
+    if(!b.found)m='<p class="fb bad">S에서 G로 가는 길이 막혀 있습니다. 벽을 지워 보세요.</p>';
+    else{m='<p class="fb ok">BFS는 '+b.total+'칸, DFS는 '+d.total+'칸을 방문했습니다.</p>';
+      m+=d.len>b.len?'<p class="fb warn">BFS 경로 '+b.len+'칸은 최단 경로이고, DFS 경로는 '+d.len+'칸으로 더 깁니다. DFS는 길을 ‘찾을’ 뿐, 가장 짧은 길을 보장하지 않습니다.</p>':'<p class="fb warn">이번에는 두 경로의 길이가 '+b.len+'칸으로 같습니다. 벽을 바꿔 DFS 경로가 더 길어지는 경우를 찾아보세요.</p>';}}
+  $('mz-fb').innerHTML=m;
+}
+function stop2(){if(MZ.timer){clearInterval(MZ.timer);MZ.timer=null;}$('mz-run').textContent='탐색 시작';}
+$('mz-run').onclick=()=>{if(MZ.timer){stop2();return;}if(!MZ.res||MZ.t>=endT())compute2();$('mz-run').textContent='일시 정지';MZ.timer=setInterval(()=>{MZ.t++;draw();if(MZ.t>=endT())stop2();},+$('mz-speed').value);};
+$('mz-step').onclick=()=>{stop2();if(!MZ.res||MZ.t>=endT())compute2();MZ.t++;draw();};
+$('mz-reset').onclick=()=>{stop2();MZ.res=null;MZ.t=0;draw();};
+$('mz-speed').onchange=()=>{if(MZ.timer){stop2();$('mz-run').click();}};
+$('mz-map').onchange=e=>{stop2();maps(e.target.value);MZ.res=null;MZ.t=0;draw();};
+$('mz-tool').onchange=e=>MZ.tool=e.target.value;
+function cellAt(cv,ev){const r=cv.getBoundingClientRect(),c=Math.floor((ev.clientX-r.left)/r.width*COLS),w=Math.floor((ev.clientY-r.top)/r.height*ROWS);return (c<0||w<0||c>=COLS||w>=ROWS)?null:[c,w];}
+function apply(p){if(!p)return;const n=cid(p[0],p[1]),isS=p[0]===MZ.S[0]&&p[1]===MZ.S[1],isG=p[0]===MZ.G[0]&&p[1]===MZ.G[1];
+  if(MZ.tool==='wall'){if(isS||isG)return;if(MZ.paint===null)MZ.paint=!MZ.walls.has(n);MZ.paint?MZ.walls.add(n):MZ.walls.delete(n);}
+  else{if(MZ.walls.has(n)||(MZ.tool==='S'&&isG)||(MZ.tool==='G'&&isS))return;MZ[MZ.tool]=p;}
+  stop2();MZ.res=null;MZ.t=0;draw();}
+Object.values(CV).forEach(cv=>{cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);MZ.paint=null;apply(cellAt(cv,e));});
+  cv.addEventListener('pointermove',e=>{if(e.buttons&&MZ.tool==='wall')apply(cellAt(cv,e));});cv.addEventListener('pointerup',()=>MZ.paint=null);});
+window.addEventListener('resize',()=>MZ.resize());
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);}catch(e){}
+new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+maps('maze');compute2();MZ.t=endT();MZ.resize();
+})();
+</script>
+</body>
+</html>
