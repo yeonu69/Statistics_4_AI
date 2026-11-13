@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9장 순열·이산적 확률·재귀적 관계 – 단계별 실습 시뮬레이터</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f8fb; --card:#fff; --ink:#1d2733; --mute:#5d6b7a; --line:#dbe5ee;
+  --pri:#1597c9; --pri2:#e3f4fb; --acc:#18a957; --acc2:#e5f7ec; --warn:#e2574c; --warn2:#fdeceb;
+  --gold:#f2a516; --gold2:#fff5dd; --vio:#7a5cd6;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Noto Sans KR',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55}
+header{background:linear-gradient(120deg,#0f7fb0,#1fb0d8);color:#fff;padding:18px 16px 14px}
+header .ch{font-size:12px;letter-spacing:.18em;opacity:.85;font-weight:700}
+header h1{margin:4px 0 2px;font-size:21px;font-weight:900;line-height:1.3}
+header p{margin:0;font-size:13px;opacity:.92}
+.hdrow{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;max-width:1080px;margin:0 auto}
+.speed{font-size:12px;background:rgba(255,255,255,.18);padding:5px 9px;border-radius:999px}
+.speed select{font:inherit;border:0;border-radius:6px;padding:1px 4px;margin-left:4px}
+nav{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(20,60,90,.06)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:9px 12px;max-width:1080px;margin:0 auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;color:var(--mute);cursor:pointer;white-space:nowrap}
+.tabs button b{color:var(--pri);margin-right:4px;font-weight:700}
+.tabs button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.tabs button.on b{color:#fff}
+main{max-width:1080px;margin:0 auto;padding:14px 12px 60px}
+section.lab{display:none}
+section.lab.on{display:block}
+.lab h2{font-size:20px;margin:6px 0 4px;font-weight:900}
+.lab h2 .no{display:inline-block;background:var(--pri);color:#fff;border-radius:7px;font-size:13px;padding:2px 8px;margin-right:6px;vertical-align:3px}
+.goal{background:var(--pri2);border-left:4px solid var(--pri);border-radius:8px;padding:9px 12px;font-size:13.5px;margin:8px 0 14px;color:#174a60}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,60,90,.04)}
+.card h3{margin:0 0 4px;font-size:16px;font-weight:700}
+.card h3 .tag{font-size:11.5px;font-weight:700;background:var(--gold2);color:#9a6500;border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.card .sub{font-size:13px;color:var(--mute);margin:0 0 10px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:6px 0 10px;font-size:13.5px}
+.ctl label{display:flex;align-items:center;gap:6px}
+.ctl input[type=number]{width:58px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:7px}
+.ctl select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:#fff}
+.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 11px;cursor:pointer;color:var(--ink)}
+.btn:hover{border-color:var(--pri)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.acc{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.ghost{background:var(--pri2);border-color:transparent;color:#0f6f96}
+.btn:disabled{opacity:.4;cursor:default}
+.stepper{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+.stepbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.stepbar .cnt{font-family:var(--mono);font-size:12.5px;color:var(--mute);min-width:64px;text-align:center}
+.stepper input[type=range]{width:100%;margin:8px 0 2px;accent-color:var(--pri)}
+.msg{background:#f7fafc;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:8px;min-height:44px}
+.msg b{color:#0f6f96}
+.msg .eq{font-family:var(--mono);background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px;white-space:nowrap}
+.big{font-size:22px;font-weight:900;color:var(--pri)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+.scroll{overflow-x:auto}
+svg{display:block;max-width:100%;height:auto}
+table.t{border-collapse:collapse;font-size:13px;margin:0 auto}
+table.t th,table.t td{border:1px solid var(--line);padding:4px 7px;text-align:center;min-width:34px}
+table.t th{background:#f1f6fa;color:var(--mute);font-weight:500}
+td.hit{background:var(--acc2);color:#0b7a3c;font-weight:700}
+td.cur{background:var(--gold2);outline:2px solid var(--gold);outline-offset:-2px;font-weight:700}
+td.dim{color:#b9c4cf}
+.slots{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+.slot{width:74px;border:2px solid var(--line);border-radius:10px;text-align:center;padding:6px 0;background:#fff}
+.slot .k{font-size:11px;color:var(--mute)}
+.slot .v{font-size:22px;font-weight:900;color:#b9c4cf}
+.slot.on{border-color:var(--pri);background:var(--pri2)}
+.slot.on .v{color:var(--pri)}
+.slot.done .v{color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{font-family:var(--mono);font-size:13px;border:1px solid var(--line);border-radius:7px;padding:3px 8px;background:#fff;cursor:pointer;user-select:none}
+.chip.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.chip.ok{background:var(--acc2);border-color:var(--acc);color:#0b7a3c}
+.chip.new{background:var(--gold2);border-color:var(--gold)}
+.list{font-family:var(--mono);font-size:12.5px;display:flex;flex-wrap:wrap;gap:4px;max-height:220px;overflow:auto;padding:4px;border:1px solid var(--line);border-radius:8px;background:#fbfdfe}
+.list span{padding:1px 6px;border-radius:5px;background:#eef4f8}
+.list span.cur{background:var(--gold);color:#fff}
+.pas{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:max-content;padding:4px 8px}
+.pas .row{display:flex;gap:4px}
+.pas .c{width:38px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12.5px;background:#eef4f8;color:transparent;cursor:pointer;transition:.15s}
+.pas .c.v{color:var(--ink)}
+.pas .c.par{background:var(--acc2);outline:2px solid var(--acc);color:#0b7a3c;font-weight:700}
+.pas .c.cur{background:var(--gold);color:#fff;font-weight:700}
+.pas .rl{width:30px;font-size:11px;color:var(--mute);display:flex;align-items:center}
+.code{font-family:var(--mono);font-size:12.5px;background:#0f2533;color:#cfe7f3;border-radius:10px;padding:10px 0;overflow-x:auto}
+.code div{padding:1px 12px;white-space:pre}
+.code div.hl{background:#1f5a78;color:#fff}
+.stack{display:flex;flex-direction:column-reverse;gap:4px;min-height:60px}
+.frame{font-family:var(--mono);font-size:12.5px;border:1px solid var(--line);border-radius:7px;padding:4px 8px;background:#fff}
+.frame.top{border-color:var(--pri);background:var(--pri2);font-weight:700}
+.frame.ret{border-color:var(--acc);background:var(--acc2)}
+.unfold{font-family:var(--mono);font-size:13px}
+.unfold div{padding:2px 6px;border-radius:5px}
+.unfold div.cur{background:var(--gold2)}
+.unfold .val{color:var(--acc);font-weight:700}
+.kpi{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.kpi div{background:#f7fafc;border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:12px;color:var(--mute)}
+.kpi b{display:block;font-size:17px;color:var(--ink);font-family:var(--mono)}
+.quiz{background:var(--gold2);border:1px solid #f3d793;border-radius:12px;padding:12px;margin-top:4px}
+.quiz .q{font-weight:700;font-size:14px;margin-bottom:6px}
+.quiz input{font:inherit;padding:5px 8px;border:1px solid #e3c779;border-radius:7px;width:120px}
+.quiz .res{margin-left:6px;font-size:13.5px;font-weight:700}
+.quiz .res.ok{color:var(--acc)}.quiz .res.no{color:var(--warn)}
+.bars .r{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}
+.bars .w{width:74px;font-family:var(--mono)}
+.bars .bg{flex:1;background:#eef4f8;border-radius:6px;height:20px;position:relative;overflow:hidden}
+.bars .fg{position:absolute;inset:0 auto 0 0;background:var(--pri);border-radius:6px;transition:width .3s}
+.bars .r.win .fg{background:var(--acc)}
+.bars .p{width:50px;text-align:right;font-family:var(--mono);font-size:12.5px}
+.sentence{font-size:19px;font-weight:700;margin:8px 0;padding:10px 12px;background:#f7fafc;border-radius:10px;border:1px solid var(--line)}
+.sentence .nw{color:var(--acc);border-bottom:3px solid var(--acc)}
+.holes{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0}
+.hole{width:78px;min-height:84px;border:2px solid var(--line);border-radius:10px;background:#fff;padding:4px;display:flex;flex-direction:column;align-items:center}
+.hole .lab{font-size:11px;color:var(--mute)}
+.hole .bd{display:flex;flex-wrap:wrap;gap:1px;justify-content:center;font-size:20px;line-height:1.1}
+.hole.dup{border-color:var(--warn);background:var(--warn2)}
+.hole.last{border-color:var(--gold);background:var(--gold2)}
+.note{font-size:12.5px;color:var(--mute)}
+.fx{font-family:var(--mono);font-size:13.5px;background:#f7fafc;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;overflow-x:auto;white-space:nowrap}
+footer{text-align:center;font-size:12px;color:var(--mute);padding:10px 0 30px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;border:0;background:#fff;padding:5px 11px;cursor:pointer;color:var(--mute)}
+.seg button.on{background:var(--pri);color:#fff}
+</style>
+</head>
+<body>
+<header>
+  <div class="hdrow">
+    <div>
+      <div class="ch">DISCRETE MATHEMATICS · CHAPTER 9</div>
+      <h1>순열·이산적 확률·재귀적 관계<br>단계별 실습 시뮬레이터</h1>
+      <p>강의자료 예제를 한 단계씩 따라가며 직접 조작해 보는 실습</p>
+    </div>
+    <div class="speed">자동 재생 속도
+      <select id="speed"><option value="1400">느리게</option><option value="800" selected>보통</option><option value="350">빠르게</option><option value="90">매우 빠르게</option></select>
+    </div>
+  </div>
+</header>
+<nav><div class="tabs" id="tabs"></div></nav>
+<main id="main">
+
+<!-- ========== 9.1 ========== -->
+<section class="lab" id="cases">
+  <h2><span class="no">9.1</span>경우의 수</h2>
+  <div class="goal">모든 경우를 <b>빠짐없이, 중복 없이</b> 세는 연습입니다. 표·트리로 세는 방법(예제 9-1)과 합의 법칙·곱의 법칙(정의 9-1, 예제 9-2)을 단계별로 확인합니다.</div>
+
+  <div class="card">
+    <h3>주사위 두 개, 두 눈의 합이 홀수<span class="tag">예제 9-1</span></h3>
+    <p class="sub">A의 눈을 하나씩 정하고, 그때 합이 홀수가 되는 B의 눈을 표에서 찾아 나갑니다.</p>
+    <div class="ctl"><label>조건 <select id="c1cond"><option value="odd">합이 홀수</option><option value="even">합이 짝수</option><option value="ge9">합이 9 이상</option><option value="eq7">합이 7</option></select></label></div>
+    <div class="scroll"><table class="t" id="c1tbl"></table></div>
+    <div class="stepper" id="c1st"></div>
+  </div>
+
+  <div class="card">
+    <h3>길 고르기: 곱의 법칙<span class="tag">예제 9-2</span></h3>
+    <p class="sub">A→B 길 3개, B→C 길 2개. 가능한 경로를 하나씩 그려 보며 셉니다.</p>
+    <div class="ctl"><span class="seg" id="c2mode"><button data-v="1" class="on">(1) A→B→C</button><button data-v="2">(2) A→C→A 왕복</button></span>
+      <label>A–B 길 <input type="number" id="c2a" value="3" min="1" max="5"></label>
+      <label>B–C 길 <input type="number" id="c2b" value="2" min="1" max="5"></label></div>
+    <svg id="c2svg" viewBox="0 0 600 190"></svg>
+    <div class="stepper" id="c2st"></div>
+  </div>
+  <div class="quiz" data-q="cases"></div>
+</section>
+
+<!-- ========== 9.2 ========== -->
+<section class="lab" id="perm">
+  <h2><span class="no">9.2</span>순열</h2>
+  <div class="goal">서로 다른 n개에서 r개를 골라 <b>순서 있게</b> 늘어놓는 수 <span class="eq">nPr = n!/(n−r)!</span>. 자리를 하나씩 채우며 곱의 법칙을 적용합니다(예제 9-4, 9-5). 같은 것이 있는 순열은 최단 경로 문제로 확인합니다(예제 9-3).</div>
+
+  <div class="card">
+    <h3>자리 채우기로 nPr 구하기<span class="tag">예제 9-4 · 9-5</span></h3>
+    <div class="ctl">
+      <label>원소 <select id="p1set"><option value="num">숫자 1,2,3,…</option><option value="abc">문자 a,b,c,…</option></select></label>
+      <label>n <input type="number" id="p1n" value="4" min="2" max="7"></label>
+      <label>r <input type="number" id="p1r" value="3" min="1" max="7"></label>
+      <button class="btn ghost" data-pre="4,3,num">예제 9-4 (4P3)</button>
+      <button class="btn ghost" data-pre="5,3,abc">예제 9-5 (5P3)</button>
+    </div>
+    <div class="slots" id="p1slots"></div>
+    <div class="stepper" id="p1st"></div>
+    <div style="margin-top:12px">
+      <b style="font-size:14px">직접 만들어 보기</b> <span class="note">— 원소를 순서대로 눌러 순열을 만들어 보세요. 새로 찾은 순열만 개수에 더해집니다.</span>
+      <div class="chips" id="p1pick"></div>
+      <div class="ctl"><span>현재: <span class="eq" id="p1cur">–</span></span><span id="p1prog"></span><button class="btn" id="p1clr">초기화</button><button class="btn" id="p1all">전체 보기</button></div>
+      <div class="list" id="p1found"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>같은 것이 있는 순열: 최단 경로<span class="tag">예제 9-3 · 정의 9-4</span></h3>
+    <p class="sub">오른쪽(x) 한 칸, 위쪽(y) 한 칸 이동. 최단 경로 = x 4개, y 3개를 늘어놓는 순열 = 7!/(4!·3!).</p>
+    <div class="ctl"><label>가로 x <input type="number" id="p2x" value="4" min="1" max="6"></label><label>세로 y <input type="number" id="p2y" value="3" min="1" max="5"></label></div>
+    <div class="grid2">
+      <svg id="p2svg" viewBox="0 0 300 240"></svg>
+      <div><div class="fx" id="p2fx"></div><div class="list" id="p2list" style="max-height:170px"></div></div>
+    </div>
+    <div class="stepper" id="p2st"></div>
+  </div>
+  <div class="quiz" data-q="perm"></div>
+</section>
+
+<!-- ========== 9.3 ========== -->
+<section class="lab" id="comb">
+  <h2><span class="no">9.3</span>조합 · 파스칼의 삼각형</h2>
+  <div class="goal">순서를 생각하지 않고 r개를 고르는 수 <span class="eq">nCr = nPr / r!</span>. 순열을 r!개씩 묶으면 조합 1개가 된다는 것을 확인하고, 파스칼의 삼각형(정리 9-1)을 한 칸씩 쌓아 이항계수를 구합니다.</div>
+
+  <div class="card">
+    <h3>순열을 r!개씩 묶으면 조합<span class="tag">정의 9-5</span></h3>
+    <div class="ctl"><label>n <input type="number" id="m1n" value="4" min="2" max="6"></label><label>r <input type="number" id="m1r" value="3" min="1" max="4"></label></div>
+    <div class="fx" id="m1fx"></div>
+    <div class="scroll"><table class="t" id="m1tbl"></table></div>
+    <div class="stepper" id="m1st"></div>
+  </div>
+
+  <div class="card">
+    <h3>두 그룹에서 고르기<span class="tag">예제 9-7 · 9-8</span></h3>
+    <div class="ctl">
+      <label>그룹1 <input type="number" id="m2a" value="5" min="0" max="12"> 개 중</label><label><input type="number" id="m2b" value="3" min="0" max="12"> 개</label>
+      <label>그룹2 <input type="number" id="m2c" value="4" min="0" max="12"> 개 중</label><label><input type="number" id="m2d" value="2" min="0" max="12"> 개</label>
+    </div>
+    <div class="ctl"><button class="btn ghost" data-pre2="5,3,4,2,남자,여자">예제 9-7 남5·여4</button><button class="btn ghost" data-pre2="3,2,4,3,빨간 공,흰 공">예제 9-8(2) 빨3·흰4</button></div>
+    <div class="msg" id="m2out"></div>
+    <div class="stepper" id="m2st"></div>
+  </div>
+
+  <div class="card">
+    <h3>파스칼의 삼각형 쌓기<span class="tag">정리 9-1 · 그림 9.2</span></h3>
+    <p class="sub">각 행의 양 끝은 1, 나머지는 바로 위 두 수의 합: <span class="eq">n−1Cr−1 + n−1Cr = nCr</span>. 칸을 누르면 nCr 값을 확인할 수 있어요.</p>
+    <div class="ctl"><label>행 수 n ≤ <input type="number" id="m3n" value="6" min="2" max="10"></label></div>
+    <div class="scroll"><div class="pas" id="m3pas"></div></div>
+    <div class="fx" id="m3bin"></div>
+    <div class="stepper" id="m3st"></div>
+  </div>
+  <div class="quiz" data-q="comb"></div>
+</section>
+
+<!-- ========== 9.4 ========== -->
+<section class="lab" id="prob">
+  <h2><span class="no">9.4</span>이산적 확률과 통계</h2>
+  <div class="goal">확률 = (사건 A가 일어나는 경우의 수) / (전체 경우의 수). 두 주사위 사건의 확률(예제 9-9), 확률변수의 평균·분산·표준편차(예제 9-11), 베이즈 정리(정리 9-1)를 단계별로 계산합니다.</div>
+
+  <div class="card">
+    <h3>두 주사위 사건의 확률 + 실험<span class="tag">예제 9-9</span></h3>
+    <p class="sub">원하는 합을 골라 사건을 만드세요. 예제 9-9는 “합이 3 또는 4”입니다.</p>
+    <div class="chips" id="q1sums"></div>
+    <div class="grid2">
+      <div class="scroll"><table class="t" id="q1tbl"></table></div>
+      <div>
+        <div class="kpi" id="q1kpi"></div>
+        <div class="ctl"><button class="btn pri" data-roll="10">10번 던지기</button><button class="btn pri" data-roll="100">100번</button><button class="btn pri" data-roll="1000">1000번</button><button class="btn" id="q1reset">초기화</button></div>
+        <svg id="q1chart" viewBox="0 0 330 170"></svg>
+        <div class="note">막대: 실험 상대도수 · 회색 테두리: 이론 확률. 던질수록 이론값에 가까워집니다(큰 수의 법칙).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>평균 · 분산 · 표준편차 단계 계산<span class="tag">예제 9-11</span></h3>
+    <p class="sub">각 눈이 나올 가중치를 바꾸면 ‘찌그러진 주사위’도 계산할 수 있습니다. 기본값은 공정한 주사위(모두 1/6).</p>
+    <div class="ctl" id="q2w"></div>
+    <div class="scroll"><table class="t" id="q2tbl"></table></div>
+    <div class="stepper" id="q2st"></div>
+  </div>
+
+  <div class="card">
+    <h3>베이즈 정리: 검사 양성일 때 실제 질병일 확률<span class="tag">정리 9-1 · 9.8</span></h3>
+    <p class="sub">사전확률 P(B₁)과 검사 정확도로 사후확률 P(B₁|A)를 구합니다. 1,000명 그림으로 셉니다.</p>
+    <div class="ctl">
+      <label>유병률 P(B₁) <input type="number" id="q3p" value="0.01" step="0.01" min="0.001" max="0.99" style="width:72px"></label>
+      <label>민감도 P(A|B₁) <input type="number" id="q3s" value="0.9" step="0.05" min="0" max="1" style="width:66px"></label>
+      <label>위양성 P(A|B₂) <input type="number" id="q3f" value="0.05" step="0.01" min="0" max="1" style="width:66px"></label>
+    </div>
+    <svg id="q3svg" viewBox="0 0 500 210"></svg>
+    <div class="stepper" id="q3st"></div>
+  </div>
+  <div class="quiz" data-q="prob"></div>
+</section>
+
+<!-- ========== 9.5 ========== -->
+<section class="lab" id="pigeon">
+  <h2><span class="no">9.5</span>비둘기 집 원리</h2>
+  <div class="goal">n개의 집에 n+1마리 이상의 비둘기가 들어가면, <b>적어도 한 집에는 2마리 이상</b>이 들어간다(정의 9-12). 일반적으로 m마리면 어떤 집에는 ⌈m/n⌉마리 이상이 있습니다.</div>
+  <div class="card">
+    <h3>비둘기를 한 마리씩 넣어 보기<span class="tag">그림 9.3 · 9.4</span></h3>
+    <div class="ctl">
+      <label>집 n <input type="number" id="g1n" value="4" min="2" max="10"></label>
+      <label>비둘기 m <input type="number" id="g1m" value="5" min="1" max="30"></label>
+      <label>넣는 방식 <select id="g1mode"><option value="even">최대한 겹치지 않게</option><option value="rand">무작위</option></select></label>
+    </div>
+    <div class="holes" id="g1holes"></div>
+    <div class="stepper" id="g1st"></div>
+  </div>
+  <div class="card">
+    <h3>생활 속 비둘기 집 원리</h3>
+    <div class="ctl"><label>상황 <select id="g2"><option value="b">생일 같은 사람 보장</option><option value="s">같은 색 양말 한 켤레</option><option value="k">같은 달 태어난 학생</option></select></label></div>
+    <div class="msg" id="g2out"></div>
+  </div>
+  <div class="quiz" data-q="pigeon"></div>
+</section>
+
+<!-- ========== 9.6 ========== -->
+<section class="lab" id="rec">
+  <h2><span class="no">9.6</span>재귀적 정의 · 재귀 호출</h2>
+  <div class="goal">재귀 = ① 같은 형태의 <b>더 작은 문제로 분할</b> → ② 가장 작은 문제(기저)의 해에서 <b>되돌아오며 결합</b>. 함수 호출 스택이 쌓이고 풀리는 과정을 한 줄씩 따라갑니다.</div>
+  <div class="card">
+    <h3>호출 스택 따라가기<span class="tag">예제 9-12 · 9-13 · 프로그램 9.1</span></h3>
+    <div class="ctl">
+      <label>함수 <select id="r1f"><option value="fact">Factorial  F(n)=n·F(n−1)</option><option value="f21">f(n)=2f(n−1)+1, f(0)=1</option><option value="sum">합 S(n)=n+S(n−1), S(1)=1</option></select></label>
+      <label>n <input type="number" id="r1n" value="5" min="1" max="8"></label>
+    </div>
+    <div class="grid2">
+      <div><div class="note" style="margin-bottom:4px">C 코드 (현재 실행 줄 강조)</div><div class="code" id="r1code"></div>
+        <div class="note" style="margin:10px 0 4px">호출 스택 (위가 최근 호출)</div><div class="stack" id="r1stack"></div></div>
+      <div><div class="note" style="margin-bottom:4px">재귀적 연산 펼치기 (그림: Factorial의 재귀적 연산)</div><div class="unfold" id="r1unf"></div>
+        <div class="kpi" id="r1kpi"></div></div>
+    </div>
+    <div class="stepper" id="r1st"></div>
+  </div>
+  <div class="quiz" data-q="rec"></div>
+</section>
+
+<!-- ========== 9.7a ========== -->
+<section class="lab" id="fib">
+  <h2><span class="no">9.7</span>피보나치 수</h2>
+  <div class="goal"><span class="eq">Fib(0)=0, Fib(1)=1, Fib(n)=Fib(n−1)+Fib(n−2)</span> (정의 9-14). 재귀 트리(그림 9.7)가 자라는 순서와 <b>같은 값을 몇 번이나 다시 계산하는지</b> 확인하고, 메모이제이션과 비교합니다.</div>
+  <div class="card">
+    <h3>Fib(n) 재귀 트리<span class="tag">그림 9.7 · 프로그램 9.2</span></h3>
+    <div class="ctl">
+      <label>n <input type="number" id="f1n" value="4" min="1" max="7"></label>
+      <span class="seg" id="f1mode"><button data-v="0" class="on">단순 재귀</button><button data-v="1">메모이제이션</button></span>
+    </div>
+    <div class="scroll"><svg id="f1svg" viewBox="0 0 400 260"></svg></div>
+    <div class="kpi" id="f1kpi"></div>
+    <div class="stepper" id="f1st"></div>
+  </div>
+  <div class="card">
+    <h3>호출 횟수 비교</h3>
+    <p class="sub">단순 재귀의 호출 수는 n이 1 늘 때마다 약 1.6배씩 불어납니다.</p>
+    <div class="scroll"><table class="t" id="f2tbl"></table></div>
+  </div>
+  <div class="quiz" data-q="fib"></div>
+</section>
+
+<!-- ========== 9.7b ========== -->
+<section class="lab" id="hanoi">
+  <h2><span class="no">9.7</span>하노이 탑</h2>
+  <div class="goal">규칙: 한 번에 원반 하나만, 작은 원반 위에 큰 원반을 놓을 수 없음. A의 원반 n개를 C로 옮기기 = <b>n−1개를 B로 → 가장 큰 원반을 C로 → n−1개를 C로</b>. 최소 이동 횟수 <span class="eq">2ⁿ − 1</span>.</div>
+  <div class="card">
+    <h3>하노이 탑 시뮬레이터<span class="tag">그림 9.9 · 프로그램 9.3</span></h3>
+    <div class="ctl">
+      <label>원반 n <input type="number" id="h1n" value="3" min="1" max="7"></label>
+      <span class="seg" id="h1mode"><button data-v="auto" class="on">단계 풀이 보기</button><button data-v="play">직접 풀기</button></span>
+    </div>
+    <svg id="h1svg" viewBox="0 0 600 220" style="cursor:pointer"></svg>
+    <div class="kpi" id="h1kpi"></div>
+    <div id="h1autoBox"><div class="stepper" id="h1st"></div></div>
+    <div id="h1playBox" style="display:none"><div class="msg" id="h1pmsg"></div><div class="ctl" style="margin-top:8px"><button class="btn" id="h1undo">한 수 무르기</button><button class="btn" id="h1restart">다시 시작</button></div></div>
+  </div>
+  <div class="quiz" data-q="hanoi"></div>
+</section>
+
+<!-- ========== 9.8 ========== -->
+<section class="lab" id="ai">
+  <h2><span class="no">9.8</span>이산적 확률과 인공지능: 챗봇의 다음 단어 예측</h2>
+  <div class="goal">챗봇은 이전 단어 다음에 올 단어들의 <b>이산 확률분포</b>를 계산하고, 그중 하나를 골라 문장을 이어 갑니다(그림 9.13). 가장 높은 확률을 고르는 방식(그리디)과 확률에 따라 뽑는 방식(샘플링)을 비교합니다.</div>
+  <div class="card">
+    <h3>“The dog is ___”<span class="tag">그림 9.13</span></h3>
+    <div class="ctl">
+      <label>선택 방식 <select id="a1mode"><option value="greedy">그리디 (최고 확률)</option><option value="sample">샘플링 (확률대로 뽑기)</option></select></label>
+      <label>온도 T <input type="range" id="a1T" min="0.2" max="3" step="0.1" value="1" style="width:110px"> <span id="a1Tv" class="eq">1.0</span></label>
+    </div>
+    <div class="sentence" id="a1sent"></div>
+    <div class="bars" id="a1bars"></div>
+    <div class="note">기본 확률: 강의자료 그림 9.13 (playing 0.45, eating 0.24, sleeping 0.15, jumping 0.08, 그 밖의 단어 0.08). 온도 T를 바꾸면 분포가 평평해지거나(T↑) 뾰족해집니다(T↓): pᵢ' ∝ pᵢ^(1/T).</div>
+    <div class="stepper" id="a1st"></div>
+    <div class="ctl" style="margin-top:10px"><button class="btn pri" data-gen="100">샘플링 100회</button><button class="btn pri" data-gen="1000">1000회</button><button class="btn" id="a1clr">결과 지우기</button></div>
+    <div class="bars" id="a1hist"></div>
+  </div>
+  <div class="quiz" data-q="ai"></div>
+</section>
+</main>
+<footer>이산수학 9장 실습용 · 강의자료(9장 순열, 이산적 확률, 재귀적 관계) 예제 기반</footer>
+
+<script>
+/* ---------- utilities ---------- */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const NS='http://www.w3.org/2000/svg';
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a||1};
+class Fr{constructor(n,d=1){if(d<0){n=-n;d=-d}const g=gcd(n,d);this.n=n/g;this.d=d/g}
+  add(o){return new Fr(this.n*o.d+o.n*this.d,this.d*o.d)} sub(o){return new Fr(this.n*o.d-o.n*this.d,this.d*o.d)}
+  mul(o){return new Fr(this.n*o.n,this.d*o.d)} v(){return this.n/this.d}
+  s(){return this.d===1?String(this.n):`${this.n}/${this.d}`}}
+const fact=n=>n<=1?1:n*fact(n-1);
+const P=(n,r)=>{let p=1;for(let i=0;i<r;i++)p*=n-i;return p};
+const C=(n,r)=>r<0||r>n?0:Math.round(P(n,r)/fact(r));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const num=(id,a,b)=>{const el=$('#'+id);let v=parseInt(el.value)||a;v=clamp(v,a,b);el.value=v;return v};
+const speed=()=>+$('#speed').value;
+function sv(tag,a={},txt){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e}
+function permsOf(arr,r){const out=[];const used=Array(arr.length).fill(false);const cur=[];
+  (function go(){if(cur.length===r){out.push(cur.slice());return}for(let i=0;i<arr.length;i++)if(!used[i]){used[i]=true;cur.push(arr[i]);go();cur.pop();used[i]=false}})();return out}
+function combsOf(arr,r){const out=[];(function go(s,cur){if(cur.length===r){out.push(cur.slice());return}for(let i=s;i<arr.length;i++){cur.push(arr[i]);go(i+1,cur);cur.pop()}})(0,[]);return out}
+function segInit(id,cb){const el=$('#'+id);el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$$('button',el).forEach(x=>x.classList.toggle('on',x===b));cb(b.dataset.v)})}
+
+/* ---------- stepper ---------- */
+function Stepper(host,draw){
+  host.innerHTML=`<div class="stepbar"><button class="btn" data-a="first" title="처음">⏮ 처음</button><button class="btn" data-a="prev">◀ 이전</button><span class="cnt"></span><button class="btn pri" data-a="next">다음 ▶</button><button class="btn acc" data-a="play">▶ 자동</button><button class="btn" data-a="last" title="끝">끝 ⏭</button></div><input type="range" min="0" value="0"><div class="msg"></div>`;
+  const st={i:0,total:1,timer:null};
+  const cnt=$('.cnt',host),rng=$('input',host),msg=$('.msg',host),play=$('[data-a=play]',host);
+  function upd(){rng.max=st.total-1;rng.value=st.i;cnt.textContent=`단계 ${st.i} / ${st.total-1}`;
+    $('[data-a=prev]',host).disabled=st.i===0;$('[data-a=next]',host).disabled=st.i>=st.total-1;
+    msg.innerHTML=draw(st.i)||''}
+  function stop(){clearTimeout(st.timer);st.timer=null;play.textContent='▶ 자동'}
+  function tick(){if(st.i>=st.total-1){stop();return}st.i++;upd();st.timer=setTimeout(tick,speed())}
+  host.addEventListener('click',e=>{const a=e.target.closest('button')?.dataset.a;if(!a)return;
+    if(a==='play'){if(st.timer){stop();return}if(st.i>=st.total-1)st.i=0;play.textContent='⏸ 정지';upd();st.timer=setTimeout(tick,speed());return}
+    stop();if(a==='first')st.i=0;if(a==='prev')st.i=Math.max(0,st.i-1);if(a==='next')st.i=Math.min(st.total-1,st.i+1);if(a==='last')st.i=st.total-1;upd()});
+  rng.addEventListener('input',()=>{stop();st.i=+rng.value;upd()});
+  return {reset(total,keep){stop();st.total=Math.max(1,total);st.i=keep?Math.min(st.i,st.total-1):0;upd()},redraw:upd,stop,get i(){return st.i}};
+}
+
+/* ---------- tabs ---------- */
+const LABS=[['cases','9.1','경우의 수'],['perm','9.2','순열'],['comb','9.3','조합·파스칼'],['prob','9.4','확률과 통계'],['pigeon','9.5','비둘기 집'],['rec','9.6','재귀적 정의'],['fib','9.7','피보나치'],['hanoi','9.7','하노이 탑'],['ai','9.8','AI 챗봇 예측']];
+$('#tabs').innerHTML=LABS.map(([id,n,t])=>`<button data-id="${id}"><b>${n}</b>${t}</button>`).join('');
+function show(id){if(!LABS.find(l=>l[0]===id))id='cases';$$('section.lab').forEach(s=>s.classList.toggle('on',s.id===id));$$('#tabs button').forEach(b=>{const on=b.dataset.id===id;b.classList.toggle('on',on);if(on)b.scrollIntoView({block:'nearest',inline:'center'})})}
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;location.hash=b.dataset.id;show(b.dataset.id);window.scrollTo({top:0})});
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+
+/* ========== 9.1 (A) dice table ========== */
+(()=>{const conds={odd:[(a,b)=>(a+b)%2===1,'합이 홀수'],even:[(a,b)=>(a+b)%2===0,'합이 짝수'],ge9:[(a,b)=>a+b>=9,'합이 9 이상'],eq7:[(a,b)=>a+b===7,'합이 7']};
+  let key='odd';
+  const st=Stepper($('#c1st'),i=>{const f=conds[key][0];let h='<tr><th>A＼B</th>'+[1,2,3,4,5,6].map(b=>`<th>${b}</th>`).join('')+'<th>개수</th></tr>';let run=0,rows=[];
+    for(let a=1;a<=6;a++){const bs=[1,2,3,4,5,6].filter(b=>f(a,b));rows.push(bs.length);
+      h+=`<tr><th>${a}</th>`+[1,2,3,4,5,6].map(b=>{const ok=f(a,b);let c='';if(a<i&&ok)c='hit';else if(a===i)c=ok?'cur':'dim';else if(a>i)c='dim';return `<td class="${c}">${a+b}</td>`}).join('')+`<td>${a<=i&&i<=6?bs.length:''}</td></tr>`;if(a<=i)run+=bs.length}
+    $('#c1tbl').innerHTML=h;const total=rows.reduce((s,x)=>s+x,0);
+    if(i===0)return `표의 각 칸은 두 눈의 합입니다. <b>A의 눈을 1부터 차례로</b> 정하면서 조건(<b>${conds[key][1]}</b>)을 만족하는 B를 찾습니다. [다음 ▶]을 눌러 보세요.`;
+    if(i<=6){const bs=[1,2,3,4,5,6].filter(b=>f(i,b));return `A = <b>${i}</b> ${key==='odd'?`(${i%2?'홀수':'짝수'} → B는 ${i%2?'짝수':'홀수'})`:''} → B ∈ {${bs.join(', ')}} : <b>${bs.length}가지</b><br>트리:&nbsp; <span class="eq">A=${i} ─ ${bs.length?bs.map(b=>'B='+b).join(' / '):'없음'}</span> &nbsp;누적 합계 <b>${run}</b>`}
+    const uniform=rows.every(x=>x===rows[0]);
+    return `모든 A를 다 보았습니다. 합계 <span class="big">${total}</span>가지 ${uniform?`= <span class="eq">6 × ${rows[0]} = ${total}</span> (A마다 B가 ${rows[0]}가지씩 → <b>곱의 법칙</b>)`:`= <span class="eq">${rows.join(' + ')}</span> (A마다 개수가 달라 <b>합의 법칙</b>으로 더함)`}<br>확률로 쓰면 ${total}/36 = ${new Fr(total,36).s()}`});
+  st.reset(8);$('#c1cond').onchange=e=>{key=e.target.value;st.reset(8)};
+})();
+
+/* ========== 9.1 (B) roads ========== */
+(()=>{let mode='1';const svg=$('#c2svg');let paths=[];
+  function build(){const a=num('c2a',1,5),b=num('c2b',1,5);paths=[];
+    if(mode==='1'){for(let i=0;i<a;i++)for(let j=0;j<b;j++)paths.push([[0,i],[1,j]])}
+    else{for(let i=0;i<a;i++)for(let j=0;j<b;j++)for(let k=0;k<b;k++)for(let l=0;l<a;l++)paths.push([[0,i],[1,j],[1,k,1],[0,l,1]])}
+    st.reset(paths.length+2)}
+  const X={A:60,B:300,C:540},Y=95;
+  function curve(seg,idx,cnt){const x1=seg?X.B:X.A,x2=seg?X.C:X.B,mid=(x1+x2)/2;const off=cnt===1?0:(idx-(cnt-1)/2)*(130/(cnt-1||1));return `M${x1} ${Y} Q${mid} ${Y+off*1.7} ${x2} ${Y}`}
+  function draw(i){const a=+$('#c2a').value,b=+$('#c2b').value;svg.innerHTML='';
+    const cur=i>=1&&i<=paths.length?paths[i-1]:null;
+    [[0,a],[1,b]].forEach(([seg,cnt])=>{for(let k=0;k<cnt;k++){const p=sv('path',{d:curve(seg,k,cnt),fill:'none',stroke:'#cfdbe5','stroke-width':3});svg.append(p);
+      const lx=seg?(X.B+X.C)/2:(X.A+X.B)/2;const off=cnt===1?0:(k-(cnt-1)/2)*(130/(cnt-1||1));svg.append(sv('text',{x:lx,y:Y+off*0.85+(off>=0?16:-6),'text-anchor':'middle','font-size':12,fill:'#5d6b7a'},(seg?'b':'a')+(k+1)))}});
+    if(cur)cur.forEach(([seg,k,back])=>{const cnt=seg?b:a;svg.append(sv('path',{d:curve(seg,k,cnt),fill:'none',stroke:back?'#f2a516':'#1597c9','stroke-width':back?5:6,'stroke-dasharray':back?'10 6':'', 'stroke-linecap':'round',opacity:.9}))});
+    ['A','B','C'].forEach(n=>{svg.append(sv('circle',{cx:X[n],cy:Y,r:20,fill:'#fff',stroke:'#1d2733','stroke-width':2}));svg.append(sv('text',{x:X[n],y:Y+6,'text-anchor':'middle','font-size':17,'font-weight':700},n))});
+    const nm=p=>p.map(([s,k])=>(s?'b':'a')+(k+1)).join(' → ');
+    if(i===0)return mode==='1'?`A→B 길 ${a}개(a1…), B→C 길 ${b}개(b1…). <b>A에서 B를 거쳐 C로 가는</b> 경로를 하나씩 그려 봅니다.`:`<b>A에서 C로 갔다가 다시 A로 돌아오는</b> 경로입니다. 갈 때(파란 실선)와 올 때(주황 점선)를 따로 골라야 합니다.`;
+    if(cur)return `경로 <b>#${i}</b> : <span class="eq">${nm(cur)}</span>`;
+    const go=a*b;return mode==='1'?`A→B ${a}가지, 각각에 대해 B→C ${b}가지 → <b>곱의 법칙</b> <span class="eq">${a} × ${b} = ${go}</span> &nbsp;<span class="big">${go}</span>가지`:`가는 방법 ${a}×${b}=${go}가지, 오는 방법도 ${go}가지 → <span class="eq">${go} × ${go} = ${go*go}</span> &nbsp;<span class="big">${go*go}</span>가지 (두 사건이 동시에 = 곱의 법칙)`}
+  const st=Stepper($('#c2st'),draw);
+  segInit('c2mode',v=>{mode=v;build()});['c2a','c2b'].forEach(id=>$('#'+id).onchange=build);build();
+})();
+
+/* ========== 9.2 (A) slots ========== */
+(()=>{let items=[],perms=[],found=new Set(),cur=[];
+  function setup(){const n=num('p1n',2,7);const r=num('p1r',1,n);const set=$('#p1set').value;
+    items=Array.from({length:n},(_,i)=>set==='num'?String(i+1):String.fromCharCode(97+i));
+    perms=permsOf(items,r).map(p=>p.join(''));found=new Set();cur=[];renderPick();st.reset(r+2)}
+  function draw(i){const n=items.length,r=+$('#p1r').value;let h='';const prod=[];
+    for(let k=0;k<r;k++){const ch=n-k;const cls=k<i-1?'done':k===i-1?'on':'';if(k<i)prod.push(ch);
+      h+=`<div class="slot ${cls}"><div class="k">${k+1}번째 자리</div><div class="v">${k<i?ch:'?'}</div><div class="k">${k<i?'가지':''}</div></div>`}
+    $('#p1slots').innerHTML=h;
+    if(i===0)return `서로 다른 <b>${n}개</b> {${items.join(', ')}} 중에서 <b>${r}개</b>를 골라 순서대로 놓습니다. 자리를 왼쪽부터 하나씩 채워 봅니다.`;
+    if(i<=r){const k=i;return `${k}번째 자리: 이미 ${k-1}개를 썼으므로 남은 <b>${n-k+1}가지</b> 중 하나. &nbsp;지금까지 <span class="eq">${prod.join(' × ')} = ${prod.reduce((a,b)=>a*b,1)}</span>`}
+    return `곱의 법칙으로 <span class="eq">${n}P${r} = ${prod.join(' × ')} = ${P(n,r)}</span><br>공식: <span class="eq">${n}P${r} = ${n}!/(${n}−${r})! = ${fact(n)}/${fact(n-r)} = ${P(n,r)}</span> &nbsp;<span class="big">${P(n,r)}</span>가지`}
+  const st=Stepper($('#p1st'),draw);
+  function renderPick(){const r=+$('#p1r').value;$('#p1pick').innerHTML=items.map(x=>`<span class="chip ${cur.includes(x)?'on':''}" data-x="${x}">${x}</span>`).join('');
+    $('#p1cur').textContent=cur.length?cur.join(''):'–';$('#p1prog').innerHTML=`찾은 순열 <b>${found.size}</b> / ${perms.length}`;
+    $('#p1found').innerHTML=[...found].map(p=>`<span>${p}</span>`).join('')||'<span style="background:none;color:#9aa">아직 없음</span>'}
+  $('#p1pick').onclick=e=>{const x=e.target.dataset.x;if(!x||cur.includes(x))return;cur.push(x);const r=+$('#p1r').value;
+    if(cur.length===r){const s=cur.join('');found.add(s);cur=[];renderPick();const sp=[...$$('#p1found span')].find(e=>e.textContent===s);if(sp)sp.classList.add('cur')}else renderPick()};
+  $('#p1clr').onclick=()=>{found=new Set();cur=[];renderPick()};
+  $('#p1all').onclick=()=>{$('#p1found').innerHTML=perms.map(p=>`<span>${p}</span>`).join('');$('#p1prog').innerHTML=`전체 <b>${perms.length}</b>개`};
+  ['p1n','p1r','p1set'].forEach(id=>$('#'+id).onchange=setup);
+  $$('[data-pre]').forEach(b=>b.onclick=()=>{const[n,r,s]=b.dataset.pre.split(',');$('#p1n').value=n;$('#p1r').value=r;$('#p1set').value=s;setup()});
+  setup();
+})();
+
+/* ========== 9.2 (B) lattice ========== */
+(()=>{let paths=[],X=4,Y=3;
+  function gen(x,y){const out=[];(function go(s,a,b){if(a===x&&b===y){out.push(s);return}if(a<x)go(s+'x',a+1,b);if(b<y)go(s+'y',a,b+1)})('',0,0);return out}
+  function setup(){X=num('p2x',1,6);Y=num('p2y',1,5);paths=gen(X,Y);
+    $('#p2fx').innerHTML=`(${X}+${Y})! / (${X}!·${Y}!) = ${fact(X+Y)} / (${fact(X)}·${fact(Y)}) = <b>${paths.length}</b> &nbsp;= ${X+Y}C${X}`;
+    $('#p2list').innerHTML=paths.map((p,i)=>`<span data-i="${i}">${p}</span>`).join('');st.reset(paths.length+2)}
+  function draw(i){const svg=$('#p2svg');svg.innerHTML='';const W=300,H=240,pad=30;const cs=Math.min((W-2*pad)/X,(H-2*pad)/Y);const ox=(W-cs*X)/2,oy=H-(H-cs*Y)/2;
+    for(let a=0;a<=X;a++)svg.append(sv('line',{x1:ox+a*cs,y1:oy,x2:ox+a*cs,y2:oy-Y*cs,stroke:'#cfdbe5','stroke-width':2}));
+    for(let b=0;b<=Y;b++)svg.append(sv('line',{x1:ox,y1:oy-b*cs,x2:ox+X*cs,y2:oy-b*cs,stroke:'#cfdbe5','stroke-width':2}));
+    const p=i>=1&&i<=paths.length?paths[i-1]:null;
+    if(p){let a=0,b=0,d=`M${ox} ${oy}`;for(const c of p){if(c==='x')a++;else b++;d+=` L${ox+a*cs} ${oy-b*cs}`}svg.append(sv('path',{d,fill:'none',stroke:'#1597c9','stroke-width':6,'stroke-linecap':'round','stroke-linejoin':'round'}))}
+    svg.append(sv('circle',{cx:ox,cy:oy,r:6,fill:'#1d2733'}));svg.append(sv('text',{x:ox-14,y:oy+18,'font-weight':700},'A'));
+    svg.append(sv('circle',{cx:ox+X*cs,cy:oy-Y*cs,r:6,fill:'#e2574c'}));svg.append(sv('text',{x:ox+X*cs+6,y:oy-Y*cs-8,'font-weight':700},'B'));
+    $$('#p2list span').forEach(s=>s.classList.toggle('cur',p&&+s.dataset.i===i-1));
+    const cur=$('#p2list span.cur');if(cur)cur.scrollIntoView({block:'nearest'});
+    if(i===0)return `어떤 최단 경로든 <b>오른쪽(x) ${X}번, 위쪽(y) ${Y}번</b>으로 이루어집니다. 즉 경로 하나 = 문자 x ${X}개와 y ${Y}개를 한 줄로 늘어놓은 것.`;
+    if(p)return `경로 #${i}: <span class="eq">${p}</span> — x가 ${X}개, y가 ${Y}개 (자리만 다름)`;
+    return `같은 것이 있는 순열(정의 9-4): <span class="eq">${X+Y}! / (${X}!·${Y}!) = ${paths.length}</span> &nbsp;<span class="big">${paths.length}</span>가지 — 위 목록과 정확히 일치합니다.`}
+  const st=Stepper($('#p2st'),draw);['p2x','p2y'].forEach(id=>$('#'+id).onchange=setup);setup();
+})();
+
+/* ========== 9.3 (A) perms grouped ========== */
+(()=>{let combs=[],n,r,items;
+  function setup(){n=num('m1n',2,6);r=num('m1r',1,Math.min(4,n));items=Array.from({length:n},(_,i)=>String.fromCharCode(97+i));combs=combsOf(items,r);
+    $('#m1fx').innerHTML=`${n}C${r} = ${n}P${r} / ${r}! = ${P(n,r)} / ${fact(r)} = <b>${combs.length}</b>`;st.reset(combs.length+2)}
+  function draw(i){let h=`<tr><th>#</th><th>조합 (순서 무시)</th><th>같은 조합에서 나오는 순열 ${r}! = ${fact(r)}개</th></tr>`;
+    combs.forEach((c,k)=>{if(k>=i)return;const ps=permsOf(c,r).map(p=>p.join(''));h+=`<tr><td>${k+1}</td><td class="${k===i-1?'cur':'hit'}">{${c.join(',')}}</td><td style="text-align:left;font-family:var(--mono);font-size:12px">${ps.join(' ')}</td></tr>`});
+    $('#m1tbl').innerHTML=h;
+    if(i===0)return `{${items.join(', ')}}에서 ${r}개를 고릅니다. 순열로 세면 ${n}P${r} = <b>${P(n,r)}</b>개인데, 이 중 같은 원소로 이루어진 것들을 한 묶음으로 모아 봅니다.`;
+    if(i<=combs.length){const c=combs[i-1];return `조합 <b>{${c.join(',')}}</b> 하나에 대응하는 순열은 ${r}개를 늘어놓는 ${r}! = <b>${fact(r)}</b>개. 지금까지 묶은 순열 ${i*fact(r)} / ${P(n,r)}`}
+    return `순열 ${P(n,r)}개가 ${fact(r)}개씩 정확히 <b>${combs.length}</b>묶음 → <span class="eq">${n}C${r} = ${n}P${r}/${r}! = ${combs.length}</span>`}
+  const st=Stepper($('#m1st'),draw);['m1n','m1r'].forEach(id=>$('#'+id).onchange=setup);setup();
+})();
+
+/* ========== 9.3 (B) two groups ========== */
+(()=>{let L=['그룹1','그룹2'];
+  function draw(i){const a=num('m2a',0,12),b=num('m2b',0,a),c=num('m2c',0,12),d=num('m2d',0,c);const x=C(a,b),y=C(c,d);
+    $('#m2out').innerHTML=`${L[0]} ${a}개 중 ${b}개, ${L[1]} ${c}개 중 ${d}개를 고르는 경우의 수는?`;
+    if(i===0)return '두 그룹에서 <b>동시에</b> 고르므로 각각의 조합을 구해 곱의 법칙을 씁니다.';
+    if(i===1)return `① ${L[0]}: <span class="eq">${a}C${b} = ${P(a,b)}/${b}! = ${x}</span>`;
+    if(i===2)return `② ${L[1]}: <span class="eq">${c}C${d} = ${P(c,d)}/${d}! = ${y}</span>`;
+    return `③ 곱의 법칙: <span class="eq">${a}C${b} × ${c}C${d} = ${x} × ${y} = ${x*y}</span> &nbsp;<span class="big">${x*y}</span>가지`}
+  const st=Stepper($('#m2st'),draw);st.reset(4);
+  ['m2a','m2b','m2c','m2d'].forEach(id=>$('#'+id).onchange=()=>{L=['그룹1','그룹2'];st.reset(4)});
+  $$('[data-pre2]').forEach(bt=>bt.onclick=()=>{const v=bt.dataset.pre2.split(',');['m2a','m2b','m2c','m2d'].forEach((id,k)=>$('#'+id).value=v[k]);L=[v[4],v[5]];st.reset(4)});
+})();
+
+/* ========== 9.3 (C) pascal ========== */
+(()=>{let N=6,cells=[];
+  function setup(){N=num('m3n',2,10);cells=[];for(let r=0;r<=N;r++)for(let k=0;k<=r;k++)cells.push([r,k]);
+    let h='';for(let r=0;r<=N;r++){h+=`<div class="row"><span class="rl">n=${r}</span>`;for(let k=0;k<=r;k++)h+=`<div class="c" data-r="${r}" data-k="${k}"></div>`;h+=`<span class="rl"></span></div>`}
+    $('#m3pas').innerHTML=h;st.reset(cells.length+1)}
+  const cell=(r,k)=>$(`#m3pas .c[data-r="${r}"][data-k="${k}"]`);
+  function bin(r){const t=[];for(let k=0;k<=r;k++){const c=C(r,k);const a=r-k,b=k;let term=(c>1?c:'')+(a?('a'+(a>1?'<sup>'+a+'</sup>':'')):'')+(b?('b'+(b>1?'<sup>'+b+'</sup>':'')):'');t.push(term||'1')}return `(a+b)<sup>${r}</sup> = `+t.join(' + ')}
+  function draw(i){$$('#m3pas .c').forEach(e=>e.className='c');
+    for(let j=0;j<i&&j<cells.length;j++){const[r,k]=cells[j];const e=cell(r,k);e.classList.add('v');e.textContent=C(r,k)}
+    if(i===0){$('#m3bin').innerHTML='행이 완성되면 그 행의 이항 전개식이 여기에 나타납니다.';return `맨 위 n=0 행부터 한 칸씩 채웁니다.`}
+    const[r,k]=cells[Math.min(i,cells.length)-1];cell(r,k).classList.add('cur');
+    const rowDone=k===r;$('#m3bin').innerHTML=bin(rowDone?r:r-1);
+    if(i>=cells.length)return `완성! 각 행 n의 수들은 (a+b)<sup>n</sup> 전개의 계수 <b>nC0, nC1, …, nCn</b>입니다(이항 정리, 정의 9-6). 칸을 눌러 확인해 보세요. 행의 합 = 2<sup>n</sup>.`;
+    if(k===0||k===r)return `n=${r} 행의 ${k===0?'첫':'마지막'} 칸 → 규칙 1) 양 끝은 <b>1</b> &nbsp;(<span class="eq">${r}C${k} = 1</span>)`;
+    cell(r-1,k-1).classList.add('par');cell(r-1,k).classList.add('par');
+    return `규칙 2) 바로 위 두 수의 합: <span class="eq">${r-1}C${k-1} + ${r-1}C${k} = ${C(r-1,k-1)} + ${C(r-1,k)} = ${C(r,k)} = ${r}C${k}</span>`}
+  const st=Stepper($('#m3st'),draw);
+  $('#m3pas').onclick=e=>{const c=e.target.closest('.c');if(!c||!c.classList.contains('v'))return;const r=+c.dataset.r,k=+c.dataset.k;
+    $('#m3st .msg').innerHTML=`<span class="eq">${r}C${k} = ${r}!/(${k}!·${r-k}!) = ${C(r,k)}</span> — (a+b)<sup>${r}</sup>에서 a<sup>${r-k}</sup>b<sup>${k}</sup>의 계수`};
+  $('#m3n').onchange=setup;setup();
+})();
+
+/* ========== 9.4 (A) two dice ========== */
+(()=>{let sel=new Set([3,4]),rolls=Array(13).fill(0),R=0,hit=0;
+  $('#q1sums').innerHTML=Array.from({length:11},(_,i)=>i+2).map(s=>`<span class="chip" data-s="${s}">합 ${s}</span>`).join('');
+  const ways=s=>6-Math.abs(s-7);
+  function render(){$$('#q1sums .chip').forEach(c=>c.classList.toggle('on',sel.has(+c.dataset.s)));
+    let h='<tr><th>A＼B</th>'+[1,2,3,4,5,6].map(b=>`<th>${b}</th>`).join('')+'</tr>';let cnt=0;const pairs=[];
+    for(let a=1;a<=6;a++){h+=`<tr><th>${a}</th>`;for(let b=1;b<=6;b++){const on=sel.has(a+b);if(on){cnt++;pairs.push(`(${a},${b})`)}h+=`<td class="${on?'hit':''}">${a+b}</td>`}h+='</tr>'}
+    $('#q1tbl').innerHTML=h;const fr=new Fr(cnt,36);
+    $('#q1kpi').innerHTML=`<div>사건 A 경우의 수<b>${cnt}</b></div><div>이론 확률 P(A)<b>${cnt}/36 = ${fr.s()}</b></div><div>실험 (${R}회)<b>${R?(hit/R).toFixed(3):'–'}</b></div><div>이론값<b>${fr.v().toFixed(3)}</b></div>`;
+    const svg=$('#q1chart');svg.innerHTML='';const bw=26,ox=18,base=145,sc=110/0.2;
+    for(let s=2;s<=12;s++){const x=ox+(s-2)*28,th=ways(s)/36,em=R?rolls[s]/R:0;
+      svg.append(sv('rect',{x,y:base-em*sc,width:bw,height:em*sc,fill:sel.has(s)?'#18a957':'#1597c9',opacity:.85,rx:3}));
+      svg.append(sv('rect',{x,y:base-th*sc,width:bw,height:th*sc,fill:'none',stroke:'#7d8a96','stroke-width':1.3,'stroke-dasharray':'3 2',rx:3}));
+      svg.append(sv('text',{x:x+bw/2,y:base+15,'text-anchor':'middle','font-size':11,fill:'#5d6b7a'},s))}
+    svg.append(sv('line',{x1:ox-4,y1:base,x2:ox+11*28,y2:base,stroke:'#9aa7b3'}))}
+  $('#q1sums').onclick=e=>{const s=+e.target.dataset.s;if(!s)return;sel.has(s)?sel.delete(s):sel.add(s);hit=0;for(const k of sel)hit+=rolls[k];render()};
+  $$('[data-roll]').forEach(b=>b.onclick=()=>{const n=+b.dataset.roll;for(let i=0;i<n;i++){const s=1+Math.floor(Math.random()*6)+1+Math.floor(Math.random()*6);rolls[s]++;R++;if(sel.has(s))hit++}render()});
+  $('#q1reset').onclick=()=>{rolls.fill(0);R=0;hit=0;render()};render();
+})();
+
+/* ========== 9.4 (B) mean/var ========== */
+(()=>{const w=[1,1,1,1,1,1];
+  $('#q2w').innerHTML='<span class="note">가중치:</span>'+w.map((v,i)=>`<label>${i+1} <input type="number" min="0" max="9" value="1" data-w="${i}" style="width:46px"></label>`).join('')+'<button class="btn ghost" id="q2fair">공정한 주사위</button>';
+  $$('#q2w input').forEach(el=>el.onchange=()=>{w[+el.dataset.w]=clamp(parseInt(el.value)||0,0,9);el.value=w[+el.dataset.w];if(w.every(x=>!x)){w[0]=1;$$('#q2w input')[0].value=1}st.reset(16)});
+  $('#q2fair').onclick=()=>{w.fill(1);$$('#q2w input').forEach(e=>e.value=1);st.reset(16)};
+  function draw(i){const W=w.reduce((a,b)=>a+b,0);const p=w.map(x=>new Fr(x,W));
+    let m=new Fr(0);p.forEach((pi,k)=>m=m.add(new Fr(k+1).mul(pi)));
+    let V=new Fr(0);p.forEach((pi,k)=>{const d=new Fr(k+1).sub(m);V=V.add(d.mul(d).mul(pi))});
+    let h=`<tr><th>xᵢ</th>${[1,2,3,4,5,6].map(x=>`<th>${x}</th>`).join('')}<th>합</th></tr><tr><th>pᵢ</th>${p.map(x=>`<td>${x.s()}</td>`).join('')}<td>1</td></tr>`;
+    let ms=new Fr(0),xp=[];for(let k=0;k<6;k++){const t=new Fr(k+1).mul(p[k]);if(k<i){ms=ms.add(t)}xp.push(k<i?`<td class="${k===i-1?'cur':'hit'}">${t.s()}</td>`:'<td></td>')}
+    h+=`<tr><th>xᵢpᵢ</th>${xp.join('')}<td>${i>=7?'<b>'+m.s()+'</b>':i>=1?ms.s():''}</td></tr>`;
+    let vs=new Fr(0),vp=[];for(let k=0;k<6;k++){const d=new Fr(k+1).sub(m);const t=d.mul(d).mul(p[k]);const on=i-7>k;if(on)vs=vs.add(t);vp.push(on?`<td class="${k===i-8?'cur':'hit'}">${t.s()}</td>`:'<td></td>')}
+    h+=`<tr><th>(xᵢ−m)²pᵢ</th>${vp.join('')}<td>${i>=14?'<b>'+V.s()+'</b>':i>=8?vs.s():''}</td></tr>`;$('#q2tbl').innerHTML=h;
+    if(i===0)return `확률변수 X = 주사위 눈. 먼저 평균(기댓값) <span class="eq">m = E(X) = Σ xᵢpᵢ</span> (정의 9-10)부터 구합니다.`;
+    if(i<=6){const k=i-1;return `x=${k+1}: <span class="eq">${k+1} × ${p[k].s()} = ${new Fr(k+1).mul(p[k]).s()}</span> &nbsp;누적 합 = <b>${ms.s()}</b>`}
+    if(i===7)return `평균 <span class="eq">m = ${m.s()} ≈ ${m.v().toFixed(3)}</span>. 다음은 분산 <span class="eq">V(X) = Σ (xᵢ−m)² pᵢ</span> (정의 9-11).`;
+    if(i<=13){const k=i-8;const d=new Fr(k+1).sub(m);return `x=${k+1}: <span class="eq">(${k+1} − ${m.s()})² × ${p[k].s()} = (${d.s()})² × ${p[k].s()} = ${d.mul(d).mul(p[k]).s()}</span> &nbsp;누적 = <b>${vs.s()}</b>`}
+    if(i===14)return `분산 <span class="eq">V(X) = ${V.s()} ≈ ${V.v().toFixed(4)}</span>`;
+    return `표준편차 <span class="eq">σ(X) = √V(X) = √(${V.s()}) ≈ ${Math.sqrt(V.v()).toFixed(4)}</span>${w.every(x=>x===1)?' = √105 / 6 (강의자료 결과와 동일)':''}<br>요약: m = <b>${m.s()}</b>, V = <b>${V.s()}</b>, σ ≈ <b>${Math.sqrt(V.v()).toFixed(3)}</b>`}
+  const st=Stepper($('#q2st'),draw);st.reset(16);
+})();
+
+/* ========== 9.4 (C) Bayes ========== */
+(()=>{function vals(){const p=clamp(+$('#q3p').value||.01,.001,.99),s=clamp(+$('#q3s').value,0,1),f=clamp(+$('#q3f').value,0,1);return{p,s,f}}
+  function draw(i){const{p,s,f}=vals();const N=1000,sick=Math.round(N*p),tp=Math.round(sick*s),fp=Math.round((N-sick)*f);
+    const svg=$('#q3svg');svg.innerHTML='';const cols=50,sz=9.4;
+    for(let k=0;k<N;k++){const x=5+(k%cols)*sz,y=5+Math.floor(k/cols)*sz;const isS=k<sick;const pos=isS?k<tp:(k-sick)<fp;
+      let fill='#dfe8ef';if(i>=1&&isS)fill='#e2574c';if(i>=2&&isS&&!pos)fill='#f3b2ac';if(i>=3&&!isS&&pos)fill='#f2a516';
+      if(i>=5&&!pos)fill=isS?'#f6d5d2':'#eef2f5';svg.append(sv('rect',{x,y,width:sz-1.6,height:sz-1.6,rx:1.5,fill}))}
+    const PA=p*s+(1-p)*f,post=PA?p*s/PA:0;
+    if(i===0)return `1,000명이 검사를 받는다고 생각해 봅시다. B₁=질병 있음, B₂=질병 없음, A=검사 양성.`;
+    if(i===1)return `사전확률 P(B₁)=${p} → 환자 약 <b>${sick}명</b> (빨강), 비환자 ${N-sick}명.`;
+    if(i===2)return `환자 중 양성: P(A|B₁)=${s} → <b>${tp}명</b> (진한 빨강). 즉 P(B₁)·P(A|B₁) = ${(p*s).toFixed(4)}`;
+    if(i===3)return `비환자 중 잘못 양성: P(A|B₂)=${f} → <b>${fp}명</b> (주황). P(B₂)·P(A|B₂) = ${((1-p)*f).toFixed(4)}`;
+    if(i===4)return `전체 양성 확률 <span class="eq">P(A) = Σ P(Bⱼ)P(A|Bⱼ) = ${(p*s).toFixed(4)} + ${((1-p)*f).toFixed(4)} = ${PA.toFixed(4)}</span> (약 ${tp+fp}명)`;
+    return `<span class="eq">P(B₁|A) = P(B₁)P(A|B₁) / P(A) = ${(p*s).toFixed(4)} / ${PA.toFixed(4)} ≈ ${(post*100).toFixed(1)}%</span><br>양성 ${tp+fp}명 중 실제 환자는 ${tp}명뿐 → 사후확률 <span class="big">${(post*100).toFixed(1)}%</span>. 사전확률이 낮으면 정확한 검사도 사후확률이 낮을 수 있습니다.`}
+  const st=Stepper($('#q3st'),draw);st.reset(6);['q3p','q3s','q3f'].forEach(id=>$('#'+id).onchange=()=>st.redraw());
+})();
+
+/* ========== 9.5 pigeonhole ========== */
+(()=>{let order=[];
+  function setup(){const n=num('g1n',2,10),m=num('g1m',1,30);const mode=$('#g1mode').value;order=[];for(let i=0;i<m;i++)order.push(mode==='even'?i%n:Math.floor(Math.random()*n));st.reset(m+2)}
+  function draw(i){const n=+$('#g1n').value,m=order.length;const cnt=Array(n).fill(0);const k=Math.min(i,m);for(let j=0;j<k;j++)cnt[order[j]]++;
+    const last=i>=1&&i<=m?order[i-1]:-1;let firstDup=-1;{const c=Array(n).fill(0);for(let j=0;j<m;j++){if(++c[order[j]]===2){firstDup=j+1;break}}}
+    $('#g1holes').innerHTML=cnt.map((c,h)=>`<div class="hole ${h===last?'last':''} ${c>=2?'dup':''}"><div class="lab">집 ${h+1}</div><div class="bd">${'🐦'.repeat(c)}</div><div class="lab">${c}마리</div></div>`).join('');
+    const need=Math.ceil(m/n);
+    if(i===0)return `집 <b>${n}</b>개, 비둘기 <b>${m}</b>마리. ${$('#g1mode').value==='even'?'겹치지 않도록 <b>빈 집부터</b> 넣어 봅니다(가장 피하려고 애쓰는 전략).':'무작위로 넣어 봅니다.'}`;
+    if(i<=m){let t=`${i}번째 비둘기 → <b>집 ${last+1}</b> (${cnt[last]}마리째)`;if(i===firstDup)t+=` &nbsp;⚠ <b style="color:var(--warn)">처음으로 한 집에 2마리!</b>`;else if(i<=n&&firstDup!==i&&cnt.every(c=>c<=1))t+=` &nbsp;아직은 모두 다른 집 (빈 집 ${cnt.filter(c=>!c).length}개)`;return t}
+    const mx=Math.max(...cnt);
+    return m>n?`비둘기 ${m} > 집 ${n} 이므로 <b>어떻게 넣어도</b> 2마리 이상인 집이 생깁니다. 일반화: 어떤 집에는 ⌈${m}/${n}⌉ = <b>${need}</b>마리 이상 (이번 결과: 최대 ${mx}마리).`:`비둘기 ${m} ≤ 집 ${n} 이면 모두 다른 집에 넣을 수도 있습니다. m을 n+1 이상으로 바꿔 보세요.`}
+  const st=Stepper($('#g1st'),draw);['g1n','g1m','g1mode'].forEach(id=>$('#'+id).onchange=setup);setup();
+  const ex={b:'1년은 최대 366일(집). 사람이 <b>367명</b>(비둘기)이면 생일이 같은 사람이 반드시 있습니다. 366 + 1 = 367.',s:'양말 색이 3가지(집)이면, 서랍에서 <b>4짝</b>만 꺼내도 같은 색 한 켤레가 반드시 있습니다. 3 + 1 = 4.',k:'달은 12개(집). 학생이 <b>40명</b>이면 ⌈40/12⌉ = <b>4</b> → 같은 달에 태어난 학생이 적어도 4명 있습니다.'};
+  $('#g2').onchange=e=>$('#g2out').innerHTML=ex[e.target.value];$('#g2out').innerHTML=ex.b;
+})();
+
+/* ========== 9.6 recursion trace ========== */
+(()=>{const F={
+  fact:{name:'fact',code:['int fact(int n)','{','    if (n <= 1) return (1);','    else return (n * fact(n - 1));','}'],base:n=>n<=1,bv:()=>1,comb:(n,c)=>n*c,ex:(n)=>`F(${n}) = ${n} × F(${n-1})`,cexp:(n,c)=>`${n} × ${c}`,bt:n=>`F(${n}) = 1`,lbl:'F'},
+  f21:{name:'f',code:['int f(int n)','{','    if (n == 0) return (1);','    else return (2 * f(n - 1) + 1);','}'],base:n=>n===0,bv:()=>1,comb:(n,c)=>2*c+1,ex:n=>`f(${n}) = 2·f(${n-1}) + 1`,cexp:(n,c)=>`2·${c} + 1`,bt:n=>`f(0) = 1`,lbl:'f'},
+  sum:{name:'S',code:['int S(int n)','{','    if (n == 1) return (1);','    else return (n + S(n - 1));','}'],base:n=>n<=1,bv:()=>1,comb:(n,c)=>n+c,ex:n=>`S(${n}) = ${n} + S(${n-1})`,cexp:(n,c)=>`${n} + ${c}`,bt:n=>`S(1) = 1`,lbl:'S'}};
+  let ev=[],fn,N;
+  function setup(){fn=F[$('#r1f').value];N=num('r1n',$('#r1f').value==='f21'?0:1,8);ev=[];
+    (function go(n){ev.push({t:'call',n});if(fn.base(n)){ev.push({t:'base',n,v:fn.bv()});return fn.bv()}ev.push({t:'rec',n});const c=go(n-1);const v=fn.comb(n,c);ev.push({t:'ret',n,c,v});return v})(N);
+    st.reset(ev.length+1)}
+  function draw(i){const L=fn.lbl;let stack=[],vals={},line=-1,e=null;
+    for(let j=0;j<i;j++){e=ev[j];if(e.t==='call')stack.push(e.n);if(e.t==='base'){vals[e.n]=e.v;stack.pop()}if(e.t==='ret'){vals[e.n]=e.v;stack.pop()}}
+    if(e)line=e.t==='call'?2:e.t==='base'?2:3;
+    $('#r1code').innerHTML=fn.code.map((c,k)=>`<div class="${k===line?'hl':''}">${c.replace(/</g,'&lt;')}</div>`).join('');
+    const showStack=stack.slice();if(e&&(e.t==='base'||e.t==='ret'))showStack.push(null);
+    $('#r1stack').innerHTML=`<div class="frame" style="opacity:.6">main()</div>`+showStack.map((n,k)=>n===null?`<div class="frame ret">${L}(${e.n}) → return ${e.v}</div>`:`<div class="frame ${k===showStack.length-1?'top':''}">${L}(${n}) &nbsp;<span class="note">대기 중…</span></div>`).join('');
+    let u='';const lo=fn.base(N)?N:(()=>{let k=N;while(!fn.base(k))k--;return k})();
+    for(let n=N;n>=lo;n--){const called=ev.slice(0,i).some(x=>x.t==='call'&&x.n===n);if(!called)break;const cur=e&&e.n===n;
+      u+=`<div class="${cur?'cur':''}">${fn.base(n)?fn.bt(n):fn.ex(n)}${vals[n]!=null?(fn.base(n)?'':` = ${fn.cexp(n,vals[n-1])}`)+` = <span class="val">${vals[n]}</span>`:''}</div>`}
+    $('#r1unf').innerHTML=u||'<span class="note">아직 호출 전</span>';
+    let depth=0;{let d=0;for(let k=0;k<i;k++){if(ev[k].t==='call')d++;if(ev[k].t==='base'||ev[k].t==='ret')d--;depth=Math.max(depth,d)}}
+    $('#r1kpi').innerHTML=`<div>호출 횟수<b>${ev.slice(0,i).filter(x=>x.t==='call').length}</b></div><div>현재 스택 깊이<b>${stack.length}</b></div><div>최대 깊이<b>${depth||0}</b></div>`;
+    if(i===0)return `main()에서 <b>${L}(${N})</b>을 호출합니다. [다음 ▶]으로 한 줄씩 실행하세요.`;
+    if(e.t==='call')return `<b>${L}(${e.n})</b> 호출 → 기저 조건 검사: ${fn.base(e.n)?'<b>참</b> (가장 작은 문제)':'거짓 → 더 작은 문제로 분할'}`;
+    if(e.t==='rec')return `${L}(${e.n})은 아직 답을 모릅니다. <b>${L}(${e.n-1})</b>을 먼저 구하려고 호출하고, 자신은 스택에서 <b>기다립니다</b>. (①분할)`;
+    if(e.t==='base')return `기저 사례 도달: <b>${L}(${e.n}) = ${e.v}</b>을 반환합니다. 이제부터 스택이 풀리며 결합합니다. (②결합 시작)`;
+    if(i===ev.length)return `최종 결과 <span class="big">${L}(${N}) = ${e.v}</span> — 스택이 모두 비었습니다. 쌓일 때는 n → 작은 쪽, 풀릴 때는 작은 쪽 → n 순서.`;
+    return `${L}(${e.n-1}) = ${e.c} 를 돌려받아 <span class="eq">${L}(${e.n}) = ${fn.cexp(e.n,e.c)} = ${e.v}</span> 계산 후 반환`}
+  const st=Stepper($('#r1st'),draw);['r1f','r1n'].forEach(id=>$('#'+id).onchange=setup);setup();
+})();
+
+/* ========== 9.7 fibonacci ========== */
+(()=>{let memo=false,root,ev=[],nodes=[];
+  function setup(){const n=num('f1n',1,7);ev=[];nodes=[];const seen=new Map();let leaf=0;
+    function build(n,d,parent){const nd={id:nodes.length,n,d,kids:[],parent,memo:false};nodes.push(nd);ev.push({t:'call',id:nd.id});
+      if(memo&&seen.has(n)){nd.memo=true;nd.v=seen.get(n);nd.x=leaf++;ev.push({t:'ret',id:nd.id});return nd.v}
+      if(n<2){nd.v=n;nd.x=leaf++}else{const a=build(n-1,d+1,nd),b=build(n-2,d+1,nd);nd.v=a+b;nd.x=(nodes.find(z=>z.parent===nd&&z.n===n-1).x+nodes.find(z=>z.parent===nd&&z.n===n-2).x)/2}
+      nd.kids=nodes.filter(z=>z.parent===nd);seen.set(n,nd.v);ev.push({t:'ret',id:nd.id});return nd.v}
+    build(n,0,null);root=nodes[0];
+    const maxD=Math.max(...nodes.map(z=>z.d));const W=Math.max(320,leaf*54),H=60+maxD*62;
+    const svg=$('#f1svg');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.style.minWidth=Math.min(W,760)+'px';svg._W=W;svg._lf=leaf;
+    st.reset(ev.length+1);
+    let h='<tr><th>n</th>';for(let k=1;k<=12;k++)h+=`<th>${k}</th>`;h+='</tr><tr><th>Fib(n)</th>';const fb=[0,1];for(let k=2;k<=12;k++)fb[k]=fb[k-1]+fb[k-2];for(let k=1;k<=12;k++)h+=`<td>${fb[k]}</td>`;
+    h+='</tr><tr><th>단순 재귀 호출 수</th>';const cc=[1,1];for(let k=2;k<=12;k++)cc[k]=1+cc[k-1]+cc[k-2];for(let k=1;k<=12;k++)h+=`<td>${cc[k]}</td>`;
+    h+='</tr><tr><th>메모 사용 호출 수</th>';for(let k=1;k<=12;k++)h+=`<td>${k<2?1:2*k-1}</td>`;h+='</tr>';$('#f2tbl').innerHTML=h}
+  function draw(i){const svg=$('#f1svg');svg.innerHTML='';const W=svg._W,lf=svg._lf;const gx=x=>(x+.5)*(W/lf),gy=d=>32+d*62;
+    const state={};let last=null;for(let j=0;j<i;j++){const e=ev[j];state[e.id]=e.t;last=e}
+    const active=[];if(last){let s=[];for(let j=0;j<i;j++){const e=ev[j];if(e.t==='call')s.push(e.id);else s.pop()}active.push(...s)}
+    nodes.forEach(nd=>{if(nd.parent&&state[nd.id])svg.append(sv('line',{x1:gx(nd.parent.x),y1:gy(nd.parent.d),x2:gx(nd.x),y2:gy(nd.d),stroke:active.includes(nd.id)?'#1597c9':'#c5d3de','stroke-width':active.includes(nd.id)?3:2}))});
+    const cntN={};nodes.forEach(nd=>{if(!state[nd.id])return;cntN[nd.n]=(cntN[nd.n]||0)+1});
+    nodes.forEach(nd=>{const s=state[nd.id];if(!s)return;const x=gx(nd.x),y=gy(nd.d);const isCur=last&&last.id===nd.id;
+      const dup=!memo&&cntN[nd.n]>1&&nd.n>=2;
+      const fill=nd.memo?'#ece5fb':s==='ret'?(dup?'#fdeceb':'#e5f7ec'):'#e3f4fb';const stroke=isCur?'#f2a516':nd.memo?'#7a5cd6':s==='ret'?(dup?'#e2574c':'#18a957'):'#1597c9';
+      svg.append(sv('rect',{x:x-25,y:y-17,width:50,height:34,rx:9,fill,stroke,'stroke-width':isCur?3.5:2}));
+      svg.append(sv('text',{x,y:y-1,'text-anchor':'middle','font-size':11.5,'font-family':'JetBrains Mono,monospace'},`Fib(${nd.n})`));
+      svg.append(sv('text',{x,y:y+12,'text-anchor':'middle','font-size':11,'font-weight':700,fill:s==='ret'?'#0b7a3c':'#9aa7b3'},s==='ret'?(nd.memo?'메모 '+nd.v:'= '+nd.v):'…'))});
+    const calls=ev.slice(0,i).filter(e=>e.t==='call').length;
+    $('#f1kpi').innerHTML=`<div>호출 횟수<b>${calls}</b> / ${nodes.length}</div><div>최종값<b>${i>=ev.length?root.v:'?'}</b></div>`+(memo?'':`<div>중복 계산된 노드<b>${nodes.filter(z=>state[z.id]&&cntN[z.n]>1&&z.n>=2).length}</b></div>`);
+    if(i===0)return `Fib(${root.n})을 호출합니다. 왼쪽 가지 Fib(n−1)을 끝까지 먼저 계산한 뒤, 오른쪽 Fib(n−2)를 계산합니다.${memo?' <b>메모이제이션</b>: 이미 구한 값은 표에 적어 두고 다시 계산하지 않습니다.':''}`;
+    const nd=nodes[last.id];
+    if(last.t==='call')return nd.memo?`Fib(${nd.n}) 호출 → 이미 계산한 값! 메모에서 <b>${nd.v}</b>를 바로 꺼냅니다.`:nd.n<2?`Fib(${nd.n}) 호출 → 기저 사례`:`Fib(${nd.n}) 호출 → <span class="eq">Fib(${nd.n-1}) + Fib(${nd.n-2})</span>로 분할`;
+    if(i>=ev.length)return `완료: <span class="big">Fib(${root.n}) = ${root.v}</span>, 총 호출 <b>${nodes.length}</b>번.${memo?'':` 빨간 노드는 <b>같은 값을 또 계산한</b> 곳입니다. 메모이제이션으로 바꿔 비교해 보세요.`}`;
+    return nd.memo?`메모 값 ${nd.v} 반환`:nd.n<2?`기저 값 <b>Fib(${nd.n}) = ${nd.v}</b> 반환`:`<span class="eq">Fib(${nd.n}) = Fib(${nd.n-1}) + Fib(${nd.n-2}) = ${nd.kids[0].v} + ${nd.kids[1].v} = ${nd.v}</span> 반환`}
+  const st=Stepper($('#f1st'),draw);segInit('f1mode',v=>{memo=v==='1';setup()});$('#f1n').onchange=setup;setup();
+})();
+
+/* ========== 9.7 hanoi ========== */
+(()=>{let mode='auto',n=3,moves=[],pegs,sel=null,hist=[];const PG=['A','B','C'];
+  function solve(){moves=[];(function h(k,from,to,via,d){if(k===0)return;h(k-1,from,via,to,d+1);moves.push({disk:k,from,to,call:`hanoi(${k}, ${PG[from]}→${PG[to]})`,d});h(k-1,via,to,from,d+1)})(n,0,2,1,0)}
+  function setup(){n=num('h1n',1,7);solve();pegs=[Array.from({length:n},(_,i)=>n-i),[],[]];sel=null;hist=[];st.reset(moves.length+1);if(mode==='play')drawPlay()}
+  function render(pg,hl,selPeg){const svg=$('#h1svg');svg.innerHTML='';const px=[110,300,490],base=195,dh=Math.min(22,150/n);
+    svg.append(sv('rect',{x:10,y:base,width:580,height:12,rx:4,fill:'#a9bccb'}));
+    pg.forEach((stck,p)=>{svg.append(sv('rect',{x:px[p]-4,y:base-dh*n-26,width:8,height:dh*n+26,rx:3,fill:selPeg===p?'#f2a516':'#8aa1b3'}));
+      svg.append(sv('text',{x:px[p],y:base-dh*n-34,'text-anchor':'middle','font-weight':700,'font-size':16},PG[p]));
+      stck.forEach((d,h)=>{const w=34+d*(140/n);const y=base-(h+1)*dh;const isHL=hl&&hl.disk===d&&hl.to===p;const isSel=selPeg===p&&h===stck.length-1;
+        svg.append(sv('rect',{x:px[p]-w/2,y,width:w,height:dh-2,rx:(dh-2)/2,fill:`hsl(${195-d*22},70%,${isHL||isSel?45:58}%)`,stroke:isHL||isSel?'#f2a516':'none','stroke-width':3}));
+        svg.append(sv('text',{x:px[p],y:y+dh/2+3,'text-anchor':'middle','font-size':Math.min(12,dh-6),fill:'#fff','font-weight':700},d))})});
+    svg.append(sv('rect',{x:0,y:0,width:600,height:220,fill:'transparent'}))}
+  function draw(i){const pg=[Array.from({length:n},(_,k)=>n-k),[],[]];for(let j=0;j<i;j++){const m=moves[j];pg[m.to].push(pg[m.from].pop())}
+    render(pg,i?moves[i-1]:null,null);
+    $('#h1kpi').innerHTML=`<div>이동 횟수<b>${i} / ${moves.length}</b></div><div>최소 이동 2ⁿ−1<b>2^${n}−1 = ${2**n-1}</b></div>`;
+    if(i===0)return `원반 ${n}개를 A에서 C로. 재귀 계획: ① 위의 ${n-1}개를 A→B (C를 임시로 사용) ② 원반 ${n}을 A→C ③ ${n-1}개를 B→C.`;
+    const m=moves[i-1];let t=`${i}단계: <b>원반 ${m.disk}을(를) ${PG[m.from]}에서 ${PG[m.to]}로 옮긴다.</b> <span class="note">(재귀 깊이 ${m.d}, ${m.call})</span>`;
+    if(m.disk===n)t+=`<br>★ 가장 큰 원반이 C로! 이제 B에 있는 ${n-1}개를 같은 방법으로 C로 옮기면 끝.`;
+    if(i===moves.length)t+=`<br>완료! 총 <span class="big">${moves.length}</span>번 = 2<sup>${n}</sup> − 1. (점화식 H(n) = 2H(n−1) + 1, H(1)=1 → 예제 9-12와 같은 꼴)`;return t}
+  function drawPlay(msg){render(pegs,null,sel);const done=pegs[2].length===n;
+    $('#h1kpi').innerHTML=`<div>내 이동 횟수<b>${hist.length}</b></div><div>최소 이동<b>${2**n-1}</b></div>`;
+    $('#h1pmsg').innerHTML=msg||(done?`🎉 성공! ${hist.length}번 만에 완료 ${hist.length===2**n-1?'— <b>최소 횟수</b>입니다!':`(최소는 ${2**n-1}번)`}`:sel!==null?`막대 ${PG[sel]}의 원반 ${pegs[sel].at(-1)} 선택됨 → 옮길 막대를 누르세요.`:'옮길 원반이 있는 막대를 누르세요. (규칙: 작은 원반 위에 큰 원반 금지)')}
+  $('#h1svg').addEventListener('click',e=>{if(mode!=='play')return;const r=$('#h1svg').getBoundingClientRect();const x=(e.clientX-r.left)/r.width*600;const p=x<205?0:x<395?1:2;
+    if(sel===null){if(!pegs[p].length)return drawPlay('빈 막대입니다. 원반이 있는 막대를 고르세요.');sel=p;return drawPlay()}
+    if(p===sel){sel=null;return drawPlay()}const d=pegs[sel].at(-1),top=pegs[p].at(-1);
+    if(top!==undefined&&top<d){const s=sel;sel=null;return drawPlay(`<b style="color:var(--warn)">규칙 위반!</b> 원반 ${d}은(는) 더 작은 원반 ${top} 위에 놓을 수 없습니다.`)}
+    pegs[p].push(pegs[sel].pop());hist.push([sel,p]);const from=sel;sel=null;drawPlay(pegs[2].length===n?null:`원반 ${d}을(를) ${PG[from]}에서 ${PG[p]}로 옮겼습니다.`)});
+  $('#h1undo').onclick=()=>{const h=hist.pop();if(!h)return;pegs[h[0]].push(pegs[h[1]].pop());sel=null;drawPlay()};
+  $('#h1restart').onclick=setup;
+  const st=Stepper($('#h1st'),draw);
+  segInit('h1mode',v=>{mode=v;st.stop();$('#h1autoBox').style.display=v==='auto'?'':'none';$('#h1playBox').style.display=v==='play'?'':'none';if(v==='play'){pegs=[Array.from({length:n},(_,i)=>n-i),[],[]];sel=null;hist=[];drawPlay()}else st.redraw()});
+  $('#h1n').onchange=setup;setup();
+})();
+
+/* ========== 9.8 chatbot ========== */
+(()=>{const base=[['playing',.45],['eating',.24],['sleeping',.15],['jumping',.08],['(기타)',.08]];let hist={},HN=0,pick=null;
+  const dist=()=>{const T=+$('#a1T').value;const w=base.map(([,p])=>Math.pow(p,1/T));const s=w.reduce((a,b)=>a+b,0);return base.map(([wd],i)=>[wd,w[i]/s])};
+  const sample=d=>{let r=Math.random(),acc=0;for(const[w,p]of d){acc+=p;if(r<acc)return w}return d.at(-1)[0]};
+  function bars(el,d,win){el.innerHTML=d.map(([w,p])=>`<div class="r ${w===win?'win':''}"><span class="w">${w}</span><span class="bg"><span class="fg" style="width:${(p*100).toFixed(1)}%"></span></span><span class="p">${p.toFixed(3)}</span></div>`).join('')}
+  function draw(i){const d=dist();const mode=$('#a1mode').value;
+    if(i===0){pick=null;$('#a1sent').innerHTML='The dog is <span class="nw">___</span>';bars($('#a1bars'),d.map(([w,p])=>[w,0]));return '이전 단어 “is” 다음에 올 단어를 예측합니다. [다음 ▶]'}
+    if(i===1){$('#a1sent').innerHTML='The dog is <span class="nw">___</span>';bars($('#a1bars'),d);return `① 후보 단어마다 조건부 확률 <span class="eq">P(다음 단어 | "The dog is")</span>를 계산합니다. 확률의 합 = ${d.reduce((a,[,p])=>a+p,0).toFixed(2)}.`}
+    if(i===2){pick=mode==='greedy'?d.reduce((a,b)=>b[1]>a[1]?b:a)[0]:sample(d);bars($('#a1bars'),d,pick);
+      return mode==='greedy'?`② 그리디: 가장 높은 확률의 단어 <b>${pick}</b> 선택 (항상 같은 답)`:`② 샘플링: 0~1 난수를 뽑아 누적 확률 구간에 해당하는 단어 <b>${pick}</b> 선택 — 다시 해 보면 바뀔 수 있습니다.`}
+    bars($('#a1bars'),d,pick);$('#a1sent').innerHTML=`The dog is <span class="nw">${pick==='(기타)'?'…':pick}</span>.`;
+    return `③ 선택한 단어를 붙여 문장을 만들고, 이 과정을 반복하면 긴 문장이 생성됩니다. 실제 챗봇(LLM)은 수만 개 후보 단어에 대해 같은 계산을 합니다.`}
+  const st=Stepper($('#a1st'),draw);st.reset(4);
+  $('#a1mode').onchange=()=>st.reset(4);
+  $('#a1T').oninput=e=>{$('#a1Tv').textContent=(+e.target.value).toFixed(1);st.redraw();renderHist()};
+  function renderHist(){if(!HN){$('#a1hist').innerHTML='';return}const d=base.map(([w])=>[w,(hist[w]||0)/HN]);bars($('#a1hist'),d);$('#a1hist').insertAdjacentHTML('afterbegin',`<div class="note">샘플링 ${HN}회 결과 (상대도수)</div>`)}
+  $$('[data-gen]').forEach(b=>b.onclick=()=>{const d=dist();for(let k=0;k<+b.dataset.gen;k++){const w=sample(d);hist[w]=(hist[w]||0)+1;HN++}renderHist()});
+  $('#a1clr').onclick=()=>{hist={};HN=0;renderHist()};
+})();
+
+/* ========== quizzes ========== */
+const QUIZ={cases:['주사위 두 개를 던질 때 두 눈의 합이 짝수인 경우의 수는?','18','A마다 B가 3가지씩: 6 × 3'],
+  perm:['5P2의 값은? (서로 다른 5개에서 2개를 골라 일렬로 배열)','20','5 × 4'],
+  comb:['7개의 공 중에서 3개를 고르는 경우의 수 7C3은?','35','7·6·5 / 3!'],
+  prob:['주사위 두 개를 던져 두 눈의 합이 7일 확률은? (분수로)','1/6','(1,6)(2,5)…(6,1) → 6가지 / 36'],
+  pigeon:['양말이 3가지 색일 때, 같은 색 한 켤레를 반드시 얻으려면 최소 몇 짝을 꺼내야 할까?','4','집 3개 + 1'],
+  rec:['f(0)=1, f(n)=2f(n−1)+1 일 때 f(6)은?','127','f(5)=63'],
+  fib:['Fib(10)의 값은?','55','Fib(8)=21, Fib(9)=34'],
+  hanoi:['원반 6개를 옮기는 최소 이동 횟수는?','63','2⁶ − 1'],
+  ai:['그리디 방식이라면 “The dog is” 다음에 어떤 단어를 고를까?','playing','확률이 가장 큰 단어']};
+const parseAns=s=>{s=String(s).trim().toLowerCase().replace(/\s/g,'');const m=s.match(/^(-?\d+)\/(\d+)$/);if(m)return +m[1]/+m[2];const v=Number(s);return isNaN(v)?s:v};
+$$('.quiz').forEach(el=>{const[q,a,hint]=QUIZ[el.dataset.q];el.innerHTML=`<div class="q">✏️ 확인 문제: ${q}</div><input placeholder="답 입력"> <button class="btn pri">확인</button> <button class="btn">힌트</button><span class="res"></span>`;
+  const [ok,hb]=$$('button',el),inp=$('input',el),res=$('.res',el);
+  const chk=()=>{const u=parseAns(inp.value),r=parseAns(a);const good=typeof u==='number'&&typeof r==='number'?Math.abs(u-r)<1e-9:u===r;res.className='res '+(good?'ok':'no');res.textContent=good?'정답! 👍':'다시 생각해 보세요.'};
+  ok.onclick=chk;inp.onkeydown=e=>{if(e.key==='Enter')chk()};hb.onclick=()=>{res.className='res';res.textContent='힌트: '+hint}});
+
+show(location.hash.slice(1)||'cases');
+</script>
+</body>
+</html>
