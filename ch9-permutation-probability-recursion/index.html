@@ -159,6 +159,22 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:10px 0 30px}
   </div>
 
   <div class="card">
+    <h3>트리로 세기<span class="tag">예제 9-1 · 트리 그림</span></h3>
+    <p class="sub">위 표와 같은 조건을 이번에는 트리로 그립니다. A의 눈마다 조건에 맞는 B의 가지를 하나씩 붙여 나갑니다. (조건은 위 표에서 바꿀 수 있어요.)</p>
+    <div class="scroll"><svg id="c3svg" viewBox="0 0 640 330"></svg></div>
+    <div class="stepper" id="c3st"></div>
+  </div>
+
+  <div class="card">
+    <h3>합의 법칙 vs 곱의 법칙<span class="tag">정의 9-1</span></h3>
+    <p class="sub">점심 메뉴로 한식 m가지, 양식 n가지가 있습니다. <b>둘 중 하나만</b> 고르면 합의 법칙(m + n), <b>하나씩 둘 다</b> 고르면 곱의 법칙(m × n)입니다.</p>
+    <div class="ctl"><label>한식 m <input type="number" id="c4m" value="3" min="1" max="6"></label><label>양식 n <input type="number" id="c4n" value="2" min="1" max="6"></label>
+      <span class="seg" id="c4mode"><button data-v="sum" class="on">A 또는 B (합)</button><button data-v="prod">A 그리고 B (곱)</button></span></div>
+    <div class="chips" id="c4list"></div>
+    <div class="stepper" id="c4st"></div>
+  </div>
+
+  <div class="card">
     <h3>길 고르기: 곱의 법칙<span class="tag">예제 9-2</span></h3>
     <p class="sub">A→B 길 3개, B→C 길 2개. 가능한 경로를 하나씩 그려 보며 셉니다.</p>
     <div class="ctl"><span class="seg" id="c2mode"><button data-v="1" class="on">(1) A→B→C</button><button data-v="2">(2) A→C→A 왕복</button></span>
@@ -203,6 +219,24 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:10px 0 30px}
       <div><div class="fx" id="p2fx"></div><div class="list" id="p2list" style="max-height:170px"></div></div>
     </div>
     <div class="stepper" id="p2st"></div>
+  </div>
+
+  <div class="card">
+    <h3>같은 문자가 있는 단어 배열하기<span class="tag">정의 9-4</span></h3>
+    <p class="sub">같은 문자가 있으면, 먼저 모두 다르다고 보고 n!을 센 뒤 같은 문자끼리 자리를 바꾸는 수(p!·q!·…)로 나눕니다. 문자열을 직접 입력해도 됩니다(8글자까지).</p>
+    <div class="ctl"><label>문자열 <input type="text" id="p3w" value="aaabb" maxlength="8" style="width:110px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:7px"></label>
+      <button class="btn ghost" data-w="aaabb">aaabb (정의 9-4)</button><button class="btn ghost" data-w="xxxxyyy">xxxxyyy (예제 9-3)</button><button class="btn ghost" data-w="banana">banana</button><button class="btn ghost" data-w="moon">moon</button></div>
+    <div class="fx" id="p3fx"></div>
+    <div class="list" id="p3list"></div>
+    <div class="stepper" id="p3st"></div>
+  </div>
+
+  <div class="card">
+    <h3>기차표 만들기: 출발역 × 도착역<span class="tag">예제 9-6</span></h3>
+    <p class="sub">역이 n개일 때 (출발역, 도착역)을 적은 표의 종류 = 서로 다른 2개를 <b>순서 있게</b> 고르는 순열 nP2. 출발역과 도착역이 같은 칸(대각선)은 표가 될 수 없습니다.</p>
+    <div class="ctl"><label>역 수 n <input type="number" id="p4n" value="15" min="2" max="15"></label></div>
+    <div class="scroll"><table class="t" id="p4tbl" style="font-size:11.5px"></table></div>
+    <div class="stepper" id="p4st"></div>
   </div>
   <div class="quiz" data-q="perm"></div>
 </section>
@@ -263,6 +297,15 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:10px 0 30px}
   </div>
 
   <div class="card">
+    <h3>확률변수와 확률분포표<span class="tag">정의 9-7 · 9-8 · 9-9</span></h3>
+    <p class="sub">확률변수 X를 고르면 X가 가질 수 있는 값과 그 확률(확률분포)이 표와 막대로 나옵니다. 기준 k를 움직여 P(X ≤ k)와 여사건 P(X &gt; k) = 1 − P(X ≤ k)를 비교해 보세요.</p>
+    <div class="ctl"><label>확률변수 X <select id="q4x"><option value="d1">주사위 1개의 눈</option><option value="d2">주사위 2개의 합</option><option value="c3">동전 3개 중 앞면 수</option><option value="dm">주사위 2개 중 큰 눈</option></select></label>
+      <label>k <input type="range" id="q4k" min="1" max="6" value="2" style="width:140px"> <span class="eq" id="q4kv">2</span></label></div>
+    <div class="grid2"><div class="scroll"><table class="t" id="q4tbl"></table></div><svg id="q4svg" viewBox="0 0 340 190"></svg></div>
+    <div class="msg" id="q4out"></div>
+  </div>
+
+  <div class="card">
     <h3>평균 · 분산 · 표준편차 단계 계산<span class="tag">예제 9-11</span></h3>
     <p class="sub">각 눈이 나올 가중치를 바꾸면 ‘찌그러진 주사위’도 계산할 수 있습니다. 기본값은 공정한 주사위(모두 1/6).</p>
     <div class="ctl" id="q2w"></div>
@@ -291,16 +334,17 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:10px 0 30px}
   <div class="card">
     <h3>비둘기를 한 마리씩 넣어 보기<span class="tag">그림 9.3 · 9.4</span></h3>
     <div class="ctl">
-      <label>집 n <input type="number" id="g1n" value="4" min="2" max="10"></label>
-      <label>비둘기 m <input type="number" id="g1m" value="5" min="1" max="30"></label>
+      <label>집 n <input type="number" id="g1n" value="4" min="2" max="20"></label>
+      <label>비둘기 m <input type="number" id="g1m" value="5" min="1" max="40"></label>
       <label>넣는 방식 <select id="g1mode"><option value="even">최대한 겹치지 않게</option><option value="rand">무작위</option></select></label>
     </div>
+    <div class="ctl"><button class="btn ghost" data-g="6,7">그림 9.3 (집 6 · 비둘기 7)</button><button class="btn ghost" data-g="3,4">그림 9.4 (바구니 3 · 사과 4)</button><button class="btn ghost" data-g="18,24">터미널 18 · 작업 24</button></div>
     <div class="holes" id="g1holes"></div>
     <div class="stepper" id="g1st"></div>
   </div>
   <div class="card">
     <h3>생활 속 비둘기 집 원리</h3>
-    <div class="ctl"><label>상황 <select id="g2"><option value="b">생일 같은 사람 보장</option><option value="s">같은 색 양말 한 켤레</option><option value="k">같은 달 태어난 학생</option></select></label></div>
+    <div class="ctl"><label>상황 <select id="g2"><option value="b">생일 같은 사람 보장</option><option value="s">같은 색 양말 한 켤레</option><option value="k">같은 달 태어난 학생</option><option value="t">터미널 18개, 작업 24개</option><option value="m">공 n개, 상자 m개</option></select></label></div>
     <div class="msg" id="g2out"></div>
   </div>
   <div class="quiz" data-q="pigeon"></div>
@@ -323,6 +367,16 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:10px 0 30px}
         <div class="kpi" id="r1kpi"></div></div>
     </div>
     <div class="stepper" id="r1st"></div>
+  </div>
+
+  <div class="card">
+    <h3>재귀로 그리는 프랙탈: 시에르핀스키 삼각형<span class="tag">그림 9.5 · 프랙탈</span></h3>
+    <p class="sub">규칙은 하나뿐입니다. “삼각형을 4조각으로 나누고 가운데를 비운 뒤, 남은 3개에 <b>같은 규칙</b>을 다시 적용한다.” 단계마다 삼각형 수는 <span class="eq">T(0)=1, T(n)=3·T(n−1)</span>을 따릅니다.</p>
+    <div class="grid2">
+      <canvas id="r2cv" width="560" height="490" style="width:100%;max-width:420px;height:auto;display:block;margin:0 auto"></canvas>
+      <div><div class="note" style="margin-bottom:4px">재귀적 관계 펼치기</div><div class="unfold" id="r2unf"></div><div class="kpi" id="r2kpi"></div></div>
+    </div>
+    <div class="stepper" id="r2st"></div>
   </div>
   <div class="quiz" data-q="rec"></div>
 </section>
@@ -369,7 +423,7 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:10px 0 30px}
 
 <!-- ========== 9.8 ========== -->
 <section class="lab" id="ai">
-  <h2><span class="no">9.8</span>이산적 확률과 인공지능: 챗봇의 다음 단어 예측</h2>
+  <h2><span class="no">9.8</span>응용 분야와 인공지능: 챗봇 예측 · 베이즈 판별</h2>
   <div class="goal">챗봇은 이전 단어 다음에 올 단어들의 <b>이산 확률분포</b>를 계산하고, 그중 하나를 골라 문장을 이어 갑니다(그림 9.13). 가장 높은 확률을 고르는 방식(그리디)과 확률에 따라 뽑는 방식(샘플링)을 비교합니다.</div>
   <div class="card">
     <h3>“The dog is ___”<span class="tag">그림 9.13</span></h3>
@@ -383,6 +437,16 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:10px 0 30px}
     <div class="stepper" id="a1st"></div>
     <div class="ctl" style="margin-top:10px"><button class="btn pri" data-gen="100">샘플링 100회</button><button class="btn pri" data-gen="1000">1000회</button><button class="btn" id="a1clr">결과 지우기</button></div>
     <div class="bars" id="a1hist"></div>
+  </div>
+
+  <div class="card">
+    <h3>베이즈 정리로 스팸 메일 거르기<span class="tag">그림 9.11 · 베이즈 정리를 이용한 예측</span></h3>
+    <p class="sub">메일 속 단어를 하나씩 눌러 보세요. 단어를 볼 때마다 <span class="eq">P(스팸|단어) = P(단어|스팸)·P(스팸) / P(단어)</span>로 스팸일 확률을 다시 계산합니다. 직전의 <b>사후 확률</b>이 다음 계산의 <b>사전 확률</b>이 됩니다.</p>
+    <div class="ctl"><label>처음 사전 확률 P(스팸) <input type="number" id="a2p" value="0.3" step="0.05" min="0.01" max="0.99" style="width:70px"></label><button class="btn" id="a2clr">단어 모두 빼기</button></div>
+    <div class="chips" id="a2words"></div>
+    <div class="scroll"><table class="t" id="a2tbl"></table></div>
+    <div class="bars" id="a2bar"></div>
+    <div class="msg" id="a2out"></div>
   </div>
   <div class="quiz" data-q="ai"></div>
 </section>
@@ -428,7 +492,7 @@ function Stepper(host,draw){
 }
 
 /* ---------- tabs ---------- */
-const LABS=[['cases','9.1','경우의 수'],['perm','9.2','순열'],['comb','9.3','조합·파스칼'],['prob','9.4','확률과 통계'],['pigeon','9.5','비둘기 집'],['rec','9.6','재귀적 정의'],['fib','9.7','피보나치'],['hanoi','9.7','하노이 탑'],['ai','9.8','AI 챗봇 예측']];
+const LABS=[['cases','9.1','경우의 수'],['perm','9.2','순열'],['comb','9.3','조합·파스칼'],['prob','9.4','확률과 통계'],['pigeon','9.5','비둘기 집'],['rec','9.6','재귀적 정의'],['fib','9.7','피보나치'],['hanoi','9.7','하노이 탑'],['ai','9.8','AI 응용']];
 $('#tabs').innerHTML=LABS.map(([id,n,t])=>`<button data-id="${id}"><b>${n}</b>${t}</button>`).join('');
 function show(id){if(!LABS.find(l=>l[0]===id))id='cases';$$('section.lab').forEach(s=>s.classList.toggle('on',s.id===id));$$('#tabs button').forEach(b=>{const on=b.dataset.id===id;b.classList.toggle('on',on);if(on)b.scrollIntoView({block:'nearest',inline:'center'})})}
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;location.hash=b.dataset.id;show(b.dataset.id);window.scrollTo({top:0})});
@@ -625,7 +689,7 @@ window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
 
 /* ========== 9.5 pigeonhole ========== */
 (()=>{let order=[];
-  function setup(){const n=num('g1n',2,10),m=num('g1m',1,30);const mode=$('#g1mode').value;order=[];for(let i=0;i<m;i++)order.push(mode==='even'?i%n:Math.floor(Math.random()*n));st.reset(m+2)}
+  function setup(){const n=num('g1n',2,20),m=num('g1m',1,40);const mode=$('#g1mode').value;order=[];for(let i=0;i<m;i++)order.push(mode==='even'?i%n:Math.floor(Math.random()*n));st.reset(m+2)}
   function draw(i){const n=+$('#g1n').value,m=order.length;const cnt=Array(n).fill(0);const k=Math.min(i,m);for(let j=0;j<k;j++)cnt[order[j]]++;
     const last=i>=1&&i<=m?order[i-1]:-1;let firstDup=-1;{const c=Array(n).fill(0);for(let j=0;j<m;j++){if(++c[order[j]]===2){firstDup=j+1;break}}}
     $('#g1holes').innerHTML=cnt.map((c,h)=>`<div class="hole ${h===last?'last':''} ${c>=2?'dup':''}"><div class="lab">집 ${h+1}</div><div class="bd">${'🐦'.repeat(c)}</div><div class="lab">${c}마리</div></div>`).join('');
@@ -635,7 +699,10 @@ window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
     const mx=Math.max(...cnt);
     return m>n?`비둘기 ${m} > 집 ${n} 이므로 <b>어떻게 넣어도</b> 2마리 이상인 집이 생깁니다. 일반화: 어떤 집에는 ⌈${m}/${n}⌉ = <b>${need}</b>마리 이상 (이번 결과: 최대 ${mx}마리).`:`비둘기 ${m} ≤ 집 ${n} 이면 모두 다른 집에 넣을 수도 있습니다. m을 n+1 이상으로 바꿔 보세요.`}
   const st=Stepper($('#g1st'),draw);['g1n','g1m','g1mode'].forEach(id=>$('#'+id).onchange=setup);setup();
-  const ex={b:'1년은 최대 366일(집). 사람이 <b>367명</b>(비둘기)이면 생일이 같은 사람이 반드시 있습니다. 366 + 1 = 367.',s:'양말 색이 3가지(집)이면, 서랍에서 <b>4짝</b>만 꺼내도 같은 색 한 켤레가 반드시 있습니다. 3 + 1 = 4.',k:'달은 12개(집). 학생이 <b>40명</b>이면 ⌈40/12⌉ = <b>4</b> → 같은 달에 태어난 학생이 적어도 4명 있습니다.'};
+  $$('[data-g]').forEach(b=>b.onclick=()=>{const[n,m]=b.dataset.g.split(',');$('#g1n').value=n;$('#g1m').value=m;$('#g1mode').value='even';setup()});
+  const ex={b:'1년은 최대 366일(집). 사람이 <b>367명</b>(비둘기)이면 생일이 같은 사람이 반드시 있습니다. 366 + 1 = 367.',s:'양말 색이 3가지(집)이면, 서랍에서 <b>4짝</b>만 꺼내도 같은 색 한 켤레가 반드시 있습니다. 3 + 1 = 4.',k:'달은 12개(집). 학생이 <b>40명</b>이면 ⌈40/12⌉ = <b>4</b> → 같은 달에 태어난 학생이 적어도 4명 있습니다.',
+    t:'터미널 <b>18개</b>(집)로 작업 <b>24개</b>(비둘기)를 동시에 처리하려 합니다. 한 터미널은 한 번에 한 작업만 하므로, 한꺼번에 시작할 수 있는 작업은 18개뿐입니다. 따라서 적어도 <b>24 − 18 = 6개</b>의 작업은 다른 작업이 끝날 때까지 기다려야 합니다. (위의 [터미널 18 · 작업 24] 버튼으로 확인)',
+    m:'공 n개를 상자 m개에 넣을 때 <b>n &gt; m</b>이면, 어떤 상자에는 반드시 공이 <b>2개 이상</b> 들어갑니다. 예: 공 5개, 상자 4개 → 적어도 한 상자에 2개.'};
   $('#g2').onchange=e=>$('#g2out').innerHTML=ex[e.target.value];$('#g2out').innerHTML=ex.b;
 })();
 
@@ -756,6 +823,131 @@ window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
   function renderHist(){if(!HN){$('#a1hist').innerHTML='';return}const d=base.map(([w])=>[w,(hist[w]||0)/HN]);bars($('#a1hist'),d);$('#a1hist').insertAdjacentHTML('afterbegin',`<div class="note">샘플링 ${HN}회 결과 (상대도수)</div>`)}
   $$('[data-gen]').forEach(b=>b.onclick=()=>{const d=dist();for(let k=0;k<+b.dataset.gen;k++){const w=sample(d);hist[w]=(hist[w]||0)+1;HN++}renderHist()});
   $('#a1clr').onclick=()=>{hist={};HN=0;renderHist()};
+})();
+
+/* ========== 9.1 (C) tree ========== */
+(()=>{const conds={odd:(a,b)=>(a+b)%2===1,even:(a,b)=>(a+b)%2===0,ge9:(a,b)=>a+b>=9,eq7:(a,b)=>a+b===7};
+  const nm={odd:'합이 홀수',even:'합이 짝수',ge9:'합이 9 이상',eq7:'합이 7'};
+  const key=()=>$('#c1cond').value;
+  function draw(i){const f=conds[key()],svg=$('#c3svg');svg.innerHTML='';let run=0;const cnts=[];
+    svg.appendChild(sv('text',{x:60,y:18,'text-anchor':'middle','font-size':13,fill:'#5d6b7a','font-style':'italic'},'A'));
+    svg.appendChild(sv('text',{x:200,y:18,'text-anchor':'middle','font-size':13,fill:'#5d6b7a','font-style':'italic'},'B'));
+    svg.appendChild(sv('text',{x:380,y:18,'text-anchor':'middle','font-size':13,fill:'#5d6b7a','font-style':'italic'},'A'));
+    svg.appendChild(sv('text',{x:520,y:18,'text-anchor':'middle','font-size':13,fill:'#5d6b7a','font-style':'italic'},'B'));
+    for(let a=1;a<=6;a++){const col=(a-1)%2,row=Math.floor((a-1)/2);const ax=60+col*320,ay=70+row*100,bx=ax+140;
+      const bs=[1,2,3,4,5,6].filter(b=>f(a,b));cnts.push(bs.length);const shown=a<=i;if(shown)run+=bs.length;
+      const cur=a===i;const col1=cur?'#f2a516':'#1597c9';
+      svg.appendChild(sv('circle',{cx:ax,cy:ay,r:15,fill:shown?(cur?'#fff5dd':'#e3f4fb'):'#f1f4f7',stroke:shown?col1:'#c9d4de','stroke-width':2}));
+      svg.appendChild(sv('text',{x:ax,y:ay+5,'text-anchor':'middle','font-size':15,'font-weight':700,fill:shown?'#1d2733':'#9aa6b2'},a));
+      if(!shown)continue;
+      bs.forEach((b,k)=>{const by=ay+(bs.length===1?0:(k-(bs.length-1)/2)*Math.min(16,80/(bs.length-1||1)));
+        svg.appendChild(sv('line',{x1:ax+15,y1:ay,x2:bx-12,y2:by,stroke:col1,'stroke-width':2}));
+        svg.appendChild(sv('text',{x:bx,y:by+5,'text-anchor':'middle','font-size':14,'font-weight':700,fill:'#1d2733'},b))});
+      if(!bs.length)svg.appendChild(sv('text',{x:bx,y:ay+5,'text-anchor':'middle','font-size':12,fill:'#9aa6b2'},'없음'));
+      svg.appendChild(sv('text',{x:bx+40,y:ay+5,'font-size':12,fill:'#5d6b7a'},bs.length+'가지'))}
+    if(i===0)return `조건: <b>${nm[key()]}</b>. A의 눈(왼쪽 원)마다 가능한 B의 눈을 가지로 그립니다. [다음 ▶]을 누르세요.`;
+    if(i<=6){const bs=[1,2,3,4,5,6].filter(b=>f(i,b));return `A = <b>${i}</b>에서 가지 <b>${bs.length}개</b>: B ∈ {${bs.join(', ')||'없음'}} &nbsp;지금까지 끝 가지(잎)의 수 <b>${run}</b>`}
+    const u=cnts.every(x=>x===cnts[0]);
+    return `트리의 끝 가지(잎) 수가 곧 경우의 수입니다: <span class="big">${run}</span>가지 = <span class="eq">${u?`6 × ${cnts[0]}`:cnts.join(' + ')}</span>. 표로 센 결과와 같습니다.`}
+  const st=Stepper($('#c3st'),draw);st.reset(8);$('#c1cond').addEventListener('change',()=>st.reset(8));
+})();
+
+/* ========== 9.1 (D) sum vs product rule ========== */
+(()=>{const K=['비빔밥','김치찌개','불고기','된장찌개','냉면','갈비탕'],W=['파스타','피자','스테이크','리조또','버거','샐러드'];let mode='sum',items=[];
+  function setup(){const m=num('c4m',1,6),n=num('c4n',1,6);
+    items=mode==='sum'?[...K.slice(0,m).map(x=>'한:'+x),...W.slice(0,n).map(x=>'양:'+x)]:K.slice(0,m).flatMap(k=>W.slice(0,n).map(w=>k+' + '+w));st.reset(items.length+2)}
+  function draw(i){const m=+$('#c4m').value,n=+$('#c4n').value,k=Math.min(i,items.length);
+    $('#c4list').innerHTML=items.map((x,j)=>`<span class="chip ${j<k?(j===k-1&&i<=items.length?'new':'ok'):''}" style="cursor:default">${x.replace('한:','🍚 ').replace('양:','🍝 ')}</span>`).join('');
+    if(i===0)return mode==='sum'?`한식 <b>또는</b> 양식 중 <b>한 가지만</b> 고릅니다. 두 사건은 동시에 일어나지 않으므로(A∩B=∅) 하나씩 세어 더합니다.`:`한식 <b>하나</b>와 양식 <b>하나</b>를 <b>둘 다</b> 고릅니다. 한식 하나마다 양식 ${n}가지가 짝지어집니다.`;
+    if(i<=items.length)return `${i}번째 경우: <b>${items[i-1].replace('한:','한식 ').replace('양:','양식 ')}</b> &nbsp;(누적 ${i})`;
+    return mode==='sum'?`합의 법칙: <span class="eq">n(A∪B) = n(A) + n(B) = ${m} + ${n} = ${m+n}</span> &nbsp;<span class="big">${m+n}</span>가지`:`곱의 법칙: <span class="eq">n(A×B) = n(A) × n(B) = ${m} × ${n} = ${m*n}</span> &nbsp;<span class="big">${m*n}</span>가지`}
+  const st=Stepper($('#c4st'),draw);segInit('c4mode',v=>{mode=v;setup()});['c4m','c4n'].forEach(id=>$('#'+id).onchange=setup);setup();
+})();
+
+/* ========== 9.2 (C) multiset permutation ========== */
+(()=>{const SUB='₀₁₂₃₄₅₆₇₈₉';let w='',cnt={},keys=[],distinct=[],labeled=[];
+  function distinctPerms(c){const out=[];const ks=Object.keys(c);const n=ks.reduce((s,k)=>s+c[k],0);(function go(s){if(out.length>=2000)return;if(s.length===n){out.push(s);return}for(const k of ks)if(c[k]>0){c[k]--;go(s+k);c[k]++}})('');return out}
+  function setup(){w=($('#p3w').value||'aaabb').replace(/\s/g,'').slice(0,8);if(!w)w='aaabb';$('#p3w').value=w;cnt={};for(const ch of w)cnt[ch]=(cnt[ch]||0)+1;keys=Object.keys(cnt);
+    distinct=distinctPerms({...cnt});
+    const seen={};const lab=[...w].map(ch=>{seen[ch]=(seen[ch]||0)+1;return cnt[ch]>1?ch+SUB[seen[ch]]:ch});
+    labeled=fact(w.length)<=720?permsOf(lab,lab.length).map(p=>p.join('')):[];st.reset(4)}
+  function draw(i){const n=w.length,dups=keys.filter(k=>cnt[k]>1),den=dups.reduce((s,k)=>s*fact(cnt[k]),1),ans=fact(n)/den;
+    $('#p3fx').innerHTML=`문자 ${n}개: `+keys.map(k=>`${k} × ${cnt[k]}`).join(', ');
+    const L=$('#p3list');
+    if(i===0){L.innerHTML='';return `“<b>${w}</b>”의 문자를 모두 써서 한 줄로 늘어놓는 방법은 몇 가지일까요? 같은 문자: ${dups.length?dups.map(k=>`<b>${k}</b> ${cnt[k]}개`).join(', '):'없음 (모두 다름)'}`}
+    if(i===1){L.innerHTML=labeled.length?labeled.slice(0,240).map(p=>`<span>${p}</span>`).join('')+(labeled.length>240?`<span>… 외 ${labeled.length-240}개</span>`:''):`<span style="background:none">${fact(n).toLocaleString()}개 — 너무 많아 목록은 생략</span>`;
+      return `① 같은 문자에 번호를 붙여 <b>모두 다르다고</b> 보면 ${n}개를 일렬로 배열하는 순열: <span class="eq">${n}! = ${fact(n).toLocaleString()}</span>`}
+    if(i===2){const ex=distinct[Math.min(1,distinct.length-1)];if(labeled.length){const strip=s=>s.replace(/[₀-₉]/g,'');const grp=labeled.filter(p=>strip(p)===ex);L.innerHTML=grp.map(p=>`<span class="cur">${p}</span>`).join('')}else L.innerHTML='';
+      return `② 그런데 번호를 지우면 “<b>${ex}</b>”처럼 똑같아 보이는 것들이 있습니다. 같은 문자끼리 자리를 바꾸는 방법 ${dups.map(k=>`${k}: ${cnt[k]}!`).join(', ')||'없음'} → 한 묶음에 <span class="eq">${dups.map(k=>cnt[k]+'!').join(' × ')||'1'} = ${den}</span>개씩 겹쳐 셌습니다.`}
+    L.innerHTML=distinct.slice(0,300).map(p=>`<span>${p}</span>`).join('')+(distinct.length>300?`<span>… 외 ${distinct.length-300}개</span>`:'');
+    return `③ 겹친 만큼 나누면 <span class="eq">${n}! / (${dups.map(k=>cnt[k]+'!').join('·')||'1'}) = ${fact(n).toLocaleString()} / ${den} = ${ans.toLocaleString()}</span> &nbsp;<span class="big">${ans.toLocaleString()}</span>가지 (목록 확인: ${distinct.length>=2000?'2000개 이상':distinct.length+'개'})`}
+  const st=Stepper($('#p3st'),draw);$('#p3w').onchange=setup;$$('[data-w]').forEach(b=>b.onclick=()=>{$('#p3w').value=b.dataset.w;setup()});setup();
+})();
+
+/* ========== 9.2 (D) train tickets ========== */
+(()=>{let n=15;
+  function setup(){n=num('p4n',2,15);st.reset(n+2)}
+  function draw(i){let h='<tr><th>출발＼도착</th>'+Array.from({length:n},(_,j)=>`<th>${j+1}</th>`).join('')+'<th>표</th></tr>';
+    for(let r=1;r<=n;r++){h+=`<tr><th>${r}</th>`;for(let c=1;c<=n;c++){let cls='dim',t='';if(r===c){t='—'}else if(r<i){cls='hit';t='✓'}else if(r===i&&i<=n){cls='cur';t='✓'}h+=`<td class="${cls}">${t}</td>`}h+=`<td>${r<=i&&i<=n+1?n-1:''}</td></tr>`}
+    $('#p4tbl').innerHTML=h;
+    if(i===0)return `역 ${n}개. 행 = 출발역, 열 = 도착역. 출발역을 하나씩 정하며 만들 수 있는 표를 채웁니다.`;
+    if(i<=n)return `출발역 <b>${i}</b>: 자기 자신을 뺀 도착역 <b>${n-1}가지</b>. 지금까지 표 <b>${i*(n-1)}</b>장`;
+    return `출발역 ${n}가지 × 도착역 ${n-1}가지: <span class="eq">${n}P2 = ${n} × ${n-1} = ${n*(n-1)}</span> &nbsp;<span class="big">${n*(n-1)}</span>가지. (1→2 표와 2→1 표는 서로 다르므로 순서가 중요한 <b>순열</b>입니다.)`}
+  const st=Stepper($('#p4st'),draw);$('#p4n').onchange=setup;setup();
+})();
+
+/* ========== 9.4 (D) random variable & distribution ========== */
+(()=>{function dist(k){const m=new Map();const add=(x)=>m.set(x,(m.get(x)||0)+1);let N=0;
+    if(k==='d1'){for(let a=1;a<=6;a++){add(a);N++}}
+    if(k==='d2'){for(let a=1;a<=6;a++)for(let b=1;b<=6;b++){add(a+b);N++}}
+    if(k==='dm'){for(let a=1;a<=6;a++)for(let b=1;b<=6;b++){add(Math.max(a,b));N++}}
+    if(k==='c3'){for(let s=0;s<8;s++){add((s&1)+(s>>1&1)+(s>>2&1));N++}}
+    return [...m.entries()].sort((x,y)=>x[0]-y[0]).map(([x,c])=>[x,new Fr(c,N),c,N])}
+  const lab={d1:'주사위 1개의 눈',d2:'주사위 2개의 합',c3:'동전 3개 중 앞면 수',dm:'주사위 2개 중 큰 눈'};
+  function render(fromSel){const key=$('#q4x').value,d=dist(key),xs=d.map(r=>r[0]);const rng=$('#q4k');
+    if(fromSel){rng.min=xs[0];rng.max=xs[xs.length-1];rng.value=key==='d2'?4:key==='c3'?1:2}
+    const k=+rng.value;$('#q4kv').textContent=k;
+    $('#q4tbl').innerHTML=`<tr><th>X = xᵢ</th>${d.map(r=>`<th>${r[0]}</th>`).join('')}<th>합</th></tr><tr><th>P(X = xᵢ)</th>${d.map(r=>`<td class="${r[0]<=k?'hit':''}">${r[1].s()}</td>`).join('')}<td>1</td></tr>`;
+    const svg=$('#q4svg');svg.innerHTML='';const W=340,H=190,pl=30,pb=26,mx=Math.max(...d.map(r=>r[1].v())),bw=(W-pl-10)/d.length;
+    svg.appendChild(sv('line',{x1:pl,y1:H-pb,x2:W-6,y2:H-pb,stroke:'#c9d4de'}));
+    d.forEach((r,j)=>{const h=(H-pb-20)*r[1].v()/mx,x=pl+j*bw+bw*.15;svg.appendChild(sv('rect',{x,y:H-pb-h,width:bw*.7,height:h,rx:3,fill:r[0]<=k?'#18a957':'#e2574c',opacity:r[0]<=k?.9:.55}));
+      svg.appendChild(sv('text',{x:x+bw*.35,y:H-pb+15,'text-anchor':'middle','font-size':11,fill:'#5d6b7a'},r[0]));
+      if(d.length<=8)svg.appendChild(sv('text',{x:x+bw*.35,y:H-pb-h-4,'text-anchor':'middle','font-size':10,fill:'#5d6b7a'},r[1].s()))});
+    let le=new Fr(0,1),parts=[];d.forEach(r=>{if(r[0]<=k){le=le.add(r[1]);parts.push(r[1].s())}});const gt=new Fr(1,1).sub(le);
+    let E=new Fr(0,1);d.forEach(r=>{E=E.add(new Fr(r[0],1).mul(r[1]))});
+    $('#q4out').innerHTML=`X = <b>${lab[key]}</b>. 가능한 값 {${xs.join(', ')}} (전체 경우 ${d[0][3]}가지)<br>
+      <span style="color:#0b7a3c">■</span> P(X ≤ ${k}) = ${parts.join(' + ')||'0'} = <b>${le.s()}</b> &nbsp; <span style="color:#e2574c">■</span> 여사건 P(X &gt; ${k}) = 1 − ${le.s()} = <b>${gt.s()}</b><br>
+      확인: 모든 확률은 0 이상 1 이하, 합은 1 (정의 9-7). 평균 E(X) = Σxᵢpᵢ = <b>${E.s()}</b>${E.d!==1?` ≈ ${E.v().toFixed(3)}`:''}`}
+  $('#q4x').onchange=()=>render(true);$('#q4k').oninput=()=>render(false);render(true);
+})();
+
+/* ========== 9.6 (B) Sierpinski ========== */
+(()=>{const cv=$('#r2cv'),g=cv.getContext('2d');
+  function tri(d,ax,ay,bx,by,cx,cy){if(d===0){g.beginPath();g.moveTo(ax,ay);g.lineTo(bx,by);g.lineTo(cx,cy);g.closePath();g.fill();return}
+    const abx=(ax+bx)/2,aby=(ay+by)/2,bcx=(bx+cx)/2,bcy=(by+cy)/2,cax=(cx+ax)/2,cay=(cy+ay)/2;
+    tri(d-1,ax,ay,abx,aby,cax,cay);tri(d-1,abx,aby,bx,by,bcx,bcy);tri(d-1,cax,cay,bcx,bcy,cx,cy)}
+  function draw(i){g.clearRect(0,0,cv.width,cv.height);g.fillStyle='#1597c9';tri(i,280,15,15,475,545,475);
+    $('#r2unf').innerHTML=Array.from({length:i+1},(_,k)=>`<div class="${k===i?'cur':''}">T(${k}) = ${k?`3 × T(${k-1}) = 3 × ${3**(k-1)} = `:''}<span class="val">${3**k}</span></div>`).join('');
+    $('#r2kpi').innerHTML=`<div>단계 n<b>${i}</b></div><div>삼각형 수 3ⁿ<b>${(3**i).toLocaleString()}</b></div><div>남은 넓이 (3/4)ⁿ<b>${((0.75**i)*100).toFixed(1)}%</b></div>`;
+    if(i===0)return '단계 0: 큰 삼각형 하나에서 시작합니다(기저 조건).';
+    return `단계 ${i}: 단계 ${i-1}의 삼각형 ${3**(i-1)}개 <b>각각</b>에 같은 규칙을 적용 → <span class="eq">T(${i}) = 3·T(${i-1}) = ${3**i}</span>. ${i>=4?'부분을 확대해도 전체와 같은 모양(자기 유사성)이 보입니다.':''}`}
+  const st=Stepper($('#r2st'),draw);st.reset(8);
+})();
+
+/* ========== 9.8 (B) naive Bayes spam ========== */
+(()=>{const WD=[['무료',.60,.05],['당첨',.40,.01],['광고',.50,.08],['할인',.45,.10],['클릭',.55,.07],['회의',.05,.40],['과제',.03,.30],['교수님',.02,.35]];
+  let seq=[];
+  function render(){const p0=clamp(+$('#a2p').value||.3,.01,.99);
+    $('#a2words').innerHTML=WD.map(([w])=>`<span class="chip ${seq.includes(w)?'on':''}" data-w="${w}">${w}</span>`).join('');
+    let prior=p0,rows=`<tr><th>순서</th><th>단어</th><th>사전 P(스팸)</th><th>P(단어|스팸)</th><th>P(단어|정상)</th><th>사후 P(스팸|단어)</th></tr>`,last='';
+    seq.forEach((w,k)=>{const[,s,h]=WD.find(x=>x[0]===w);const num=s*prior,den=num+h*(1-prior),post=num/den;
+      rows+=`<tr><td>${k+1}</td><td>${w}</td><td>${prior.toFixed(3)}</td><td>${s}</td><td>${h}</td><td class="${k===seq.length-1?'cur':''}">${post.toFixed(3)}</td></tr>`;
+      last=`마지막 계산: <span class="eq">(${s} × ${prior.toFixed(3)}) / (${s} × ${prior.toFixed(3)} + ${h} × ${(1-prior).toFixed(3)}) = ${post.toFixed(3)}</span><br>`;prior=post});
+    $('#a2tbl').innerHTML=seq.length?rows:'';
+    $('#a2bar').innerHTML=`<div class="r ${prior>=.5?'win':''}"><span class="w">스팸</span><span class="bg"><span class="fg" style="width:${(prior*100).toFixed(1)}%"></span></span><span class="p">${prior.toFixed(3)}</span></div><div class="r ${prior<.5?'win':''}"><span class="w">정상</span><span class="bg"><span class="fg" style="width:${((1-prior)*100).toFixed(1)}%"></span></span><span class="p">${(1-prior).toFixed(3)}</span></div>`;
+    $('#a2out').innerHTML=seq.length?last+`판정: <b>${prior>=.5?'스팸 메일함으로 이동':'받은 메일함에 둠'}</b> (기준 0.5). 스팸에 자주 나오는 단어는 확률을 올리고, 업무 단어는 내립니다.`:'단어를 누르면 계산이 시작됩니다. 지금은 사전 확률만 있습니다.'}
+  $('#a2words').onclick=e=>{const w=e.target.dataset.w;if(!w)return;seq=seq.includes(w)?seq.filter(x=>x!==w):[...seq,w];render()};
+  $('#a2clr').onclick=()=>{seq=[];render()};$('#a2p').onchange=render;render();
 })();
 
 /* ========== quizzes ========== */
