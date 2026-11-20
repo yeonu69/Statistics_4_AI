@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>8장 트리 강의 영상</title>
+<meta name="description" content="이산수학 8장 트리: 파싱 트리, 이진 트리 탐방, 최소비용 생성 트리(프림·크루스칼), 게임 트리 짧은 강의 영상 모음">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f8fb;--card:#fff;--ink:#1d2733;--mute:#5d6b7a;--line:#dbe5ee;--pri:#1597c9;--pri2:#e3f4fb;--gold:#f2a516;--gold2:#fff5dd}
+@media (prefers-color-scheme:dark){:root{--bg:#11171e;--card:#1b232d;--ink:#eceff3;--mute:#9aa6b5;--line:#2f3a47;--pri:#5cc0e8;--pri2:#173444;--gold2:#3a2f14;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Noto Sans KR',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+header{background:linear-gradient(120deg,#0f7fb0,#1fb0d8);color:#fff;padding:30px 16px 26px}
+.wrap{max-width:1040px;margin:0 auto}
+header .k{font-size:12px;letter-spacing:.2em;font-weight:700;opacity:.85}
+header h1{margin:6px 0 4px;font-size:26px;font-weight:900}
+header p{margin:0;opacity:.92;font-size:14px}
+header a{color:#fff}
+main{padding:22px 16px 50px}
+.stage{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.stage{grid-template-columns:minmax(0,1fr)}}
+.player{position:sticky;top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+@media (max-width:760px){.player{position:static}}
+video{display:block;width:100%;max-height:78vh;aspect-ratio:9/16;background:#000;border-radius:10px;object-fit:contain}
+.now{margin:10px 2px 0}
+.now .sec{display:inline-block;font-size:11.5px;font-weight:700;background:var(--pri2);color:var(--pri);border-radius:6px;padding:1px 7px}
+.now h2{font-size:17px;margin:4px 0 2px;line-height:1.4}
+.now p{margin:0;font-size:13.5px;color:var(--mute)}
+.nav{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 12px;font:inherit;font-size:13.5px;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--pri)}
+.btn:focus-visible,.item:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.list{display:grid;gap:8px}
+.list h3{font-size:14px;color:var(--mute);margin:6px 0 0;font-weight:700}
+.item{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.item:hover{border-color:var(--pri)}
+.item.on{border-color:var(--gold);background:var(--gold2)}
+.item img{width:64px;height:96px;object-fit:cover;border-radius:7px;background:var(--line)}
+.item .t{font-weight:700;font-size:14.5px;line-height:1.45}
+.item .m{font-size:12.5px;color:var(--mute);margin-top:2px}
+.item .n{font-weight:900;color:var(--pri);margin-right:4px}
+footer{text-align:center;color:var(--mute);font-size:12.5px;padding:0 16px 36px}
+footer a{color:inherit}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="k">DISCRETE MATHEMATICS · CHAPTER 8</div>
+  <h1>8장 트리 · 강의 영상</h1>
+  <p>1~2분짜리 짧은 영상 7편. 교재 순서대로 보거나, 오른쪽 목록에서 원하는 영상을 고르세요. · <a href="/">강의 실습실로</a></p>
+</div></header>
+
+<main class="wrap">
+  <div class="stage">
+    <div class="player">
+      <video id="v" controls playsinline preload="metadata"></video>
+      <div class="now"><span class="sec" id="nsec"></span><h2 id="ntitle"></h2><p id="ndesc"></p></div>
+      <div class="nav"><button class="btn" id="prev">◀ 이전 영상</button><button class="btn" id="next">다음 영상 ▶</button><a class="btn" id="dl" download>파일 받기</a></div>
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+</main>
+<footer>© Yeonwoo Lee · 목포대학교 인공지능공학과 · <a href="https://github.com/yeonu69/Statistics_4_AI/tree/main/ch8-tree-videos">영상 파일 저장소</a></footer>
+
+<script>
+const V=[
+ {f:'파싱_트리__컴퓨터가_인간의_언어를_해부하는_방법',sec:'8.2 방향 트리',d:'1:35',desc:'문장을 문법 기호로 쪼개는 파싱 트리로 컴퓨터가 언어를 이해하는 원리'},
+ {f:'복잡한_이진_트리를_순서대로_읽는_단_하나의_규칙',sec:'8.5 이진 트리의 탐방',d:'1:52',desc:'전순위·중순위·후순위 탐방을 하나의 재귀 규칙으로 읽기'},
+ {f:'최소비용_생성_트리가_네트워크망을_최적화하는_법',sec:'8.6 최소비용 생성 트리',d:'1:45',desc:'신도시 도로망·통신망을 가장 적은 비용으로 연결하는 생성 트리'},
+ {f:'프림_알고리즘으로_그리는_최소_비용_생성_트리',sec:'8.6 프림 알고리즘',d:'1:25',desc:'집합 U에서 밖으로 나가는 가장 싼 연결선을 하나씩 더하기'},
+ {f:'가장_싼_길만_쏙쏙,_크루스칼_알고리즘',sec:'8.6 크루스칼 알고리즘',d:'1:19',desc:'비용이 작은 연결선부터 고르고 사이클이 생기면 버리기'},
+ {f:'최소_비용으로_모두를_연결하는_크루스칼_알고리즘',sec:'8.6 크루스칼 알고리즘',d:'1:06',desc:'크루스칼 알고리즘으로 모든 도시를 최소 비용으로 잇기'},
+ {f:'게임_트리__인공지능이_퍼즐을_푸는_원리',sec:'8.8 트리와 인공지능',d:'1:19',desc:'게임 트리와 탐색으로 인공지능이 퍼즐을 푸는 원리'}
+];
+const title=f=>f.replace(/__/g,': ').replace(/_/g,' ');
+const enc=s=>encodeURIComponent(s);
+const $=s=>document.querySelector(s),v=$('#v');let cur=0;
+const list=$('#list');let lastSec='';
+V.forEach((x,i)=>{const s=x.sec.split(' ')[0];if(s!==lastSec){const h=document.createElement('h3');h.textContent=x.sec.replace(/ (프림|크루스칼) 알고리즘$/,' 최소비용 생성 트리');list.appendChild(h);lastSec=s}
+  const b=document.createElement('button');b.className='item';b.dataset.i=i;
+  b.innerHTML=`<img src="thumbs/${enc(x.f)}.jpg" alt="" loading="lazy"><div><div class="t"><span class="n">${i+1}</span>${title(x.f)}</div><div class="m">${x.sec} · ${x.d}</div></div>`;
+  b.onclick=()=>{location.hash='v'+(i+1)};list.appendChild(b)});
+function load(i,play){cur=(i+V.length)%V.length;const x=V[cur];
+  v.src=enc(x.f)+'.mp4';v.poster='thumbs/'+enc(x.f)+'.jpg';$('#dl').href=v.src;
+  $('#nsec').textContent=x.sec;$('#ntitle').textContent=`${cur+1}. ${title(x.f)}`;$('#ndesc').textContent=x.desc;
+  document.title=title(x.f)+' · 8장 트리 강의 영상';
+  list.querySelectorAll('.item').forEach(b=>b.classList.toggle('on',+b.dataset.i===cur));
+  if(play)v.play().catch(()=>{})}
+$('#prev').onclick=()=>location.hash='v'+((cur-1+V.length)%V.length+1);
+$('#next').onclick=()=>location.hash='v'+((cur+1)%V.length+1);
+v.addEventListener('ended',()=>{if(cur<V.length-1)location.hash='v'+(cur+2)});
+let first=true;
+function route(){const m=/^#v(\d+)$/.exec(location.hash);load(m?+m[1]-1:0,!first);first=false}
+window.addEventListener('hashchange',route);route();
+</script>
+</body>
+</html>
