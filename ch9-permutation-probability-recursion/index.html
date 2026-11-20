@@ -972,13 +972,15 @@ window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
   {f:'파스칼의_삼각형__덧셈으로_끝내는_조합_계산',sec:'9.3 조합',lab:'comb',d:'1:23',desc:'nCr = n−1Cr−1 + n−1Cr — 곱셈 없이 덧셈만으로 조합 구하기'},
   {f:'이산확률변수_주사위로_파헤치는_평균과_분산',sec:'9.4 확률과 통계',lab:'prob',d:'1:18',desc:'주사위 눈을 확률변수로 보고 평균 E(X)와 분산 V(X) 구하기'},
   {f:'베이즈_정리__인공지능은_어떻게_미래를_예측할까_',sec:'9.4 베이즈 정리 · 9.8 AI',lab:'prob',d:'1:24',desc:'사전 확률에 새 정보를 더해 사후 확률로 고치는 베이즈 정리와 AI 예측'},
+  {f:'비둘기_집_원리__사과가_겹칠_수밖에_없는_이유',sec:'9.5 비둘기 집 원리',lab:'pigeon',d:'1:08',desc:'집보다 비둘기가 많으면 적어도 한 집에는 두 마리 이상 — 사과 바구니로 보는 원리'},
+  {f:'무한한_복잡성을_만드는_단_하나의_공식,_재귀',sec:'9.6 재귀적 정의',lab:'rec',d:'1:31',desc:'같은 규칙을 더 작은 문제에 반복 적용하는 재귀가 프랙탈 같은 복잡한 구조를 만드는 원리'},
   {f:'하노이_탑에_숨겨진__재귀적_관계_의_비밀',t:'하노이 탑에 숨겨진 ‘재귀적 관계’의 비밀',sec:'9.7 하노이 탑',lab:'hanoi',d:'1:14',desc:'n−1개 옮기기 → 큰 원반 → n−1개 옮기기, 최소 이동 2ⁿ − 1'}];
   const enc=encodeURIComponent,T0=f=>f.replace(/__/g,': ').replace(/_$/,'?').replace(/_/g,' ');
   const title=f=>{const x=VD.find(v=>v.f===f);return x&&x.t||T0(f)};
   const vtag=x=>`<video controls playsinline preload="none" poster="videos/thumbs/${enc(x.f)}.jpg" src="videos/${enc(x.f)}.mp4"></video>`;
   $('#vgrid').innerHTML=VD.map((x,i)=>`<div class="vcard" id="vid${i+1}"><span class="vs">${x.sec}</span>${vtag(x)}<div class="vt">${i+1}. ${title(x.f)}</div><div class="vd">${x.desc} · ${x.d}</div><button class="vgo" data-lab="${x.lab}">실습하러 가기 →</button></div>`).join('');
   $('#vgrid').addEventListener('click',e=>{const b=e.target.closest('[data-lab]');if(!b)return;location.hash=b.dataset.lab;window.scrollTo({top:0})});
-  const per={perm:[0],comb:[1],prob:[2,3],rec:[0],hanoi:[4],ai:[3]};
+  const per={perm:[0],comb:[1],prob:[2,3],pigeon:[4],rec:[5,0],hanoi:[6],ai:[3]};
   for(const id in per){const g=document.querySelector(`#${id} .goal`);if(!g)continue;const w=document.createElement('div');
     w.innerHTML=`<p class="vin-h">▶ 먼저 영상으로 보기</p><div class="vin">${per[id].map(i=>{const x=VD[i];return `<div class="vcard">${vtag(x)}<div class="vt">${title(x.f)}</div><div class="vd">${x.d}</div></div>`}).join('')}</div>`;
     g.after(w)}
