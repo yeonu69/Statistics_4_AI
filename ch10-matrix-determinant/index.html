@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10장 행렬과 행렬식 – 실생활·AI 활용 실험실</title>
+<meta name="description" content="이산수학 10장 행렬과 행렬식: 행렬 연산, 특수 행렬, 사다리꼴, 행렬식, 역행렬, 연립방정식, 신경망, CNN 합성곱까지 단계별 시뮬레이터">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f8fb; --card:#fff; --ink:#1d2733; --mute:#5d6b7a; --line:#dbe5ee;
+  --pri:#1597c9; --pri2:#e3f4fb; --acc:#18a957; --acc2:#e5f7ec; --warn:#e2574c; --warn2:#fdeceb;
+  --gold:#f2a516; --gold2:#fff5dd; --vio:#7a5cd6;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Noto Sans KR',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55}
+header{background:linear-gradient(120deg,#0f7fb0,#1fb0d8);color:#fff;padding:18px 16px 14px}
+header .ch{font-size:12px;letter-spacing:.18em;opacity:.85;font-weight:700}
+header h1{margin:4px 0 2px;font-size:21px;font-weight:900;line-height:1.3}
+header p{margin:0;font-size:13px;opacity:.92}
+.hdrow{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;max-width:1080px;margin:0 auto}
+.speed{font-size:12px;background:rgba(255,255,255,.18);padding:5px 9px;border-radius:999px}
+.speed select{font:inherit;border:0;border-radius:6px;padding:1px 4px;margin-left:4px}
+nav{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(20,60,90,.06)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:9px 12px;max-width:1080px;margin:0 auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;color:var(--mute);cursor:pointer;white-space:nowrap}
+.tabs button b{color:var(--pri);margin-right:4px;font-weight:700}
+.tabs button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.tabs button.on b{color:#fff}
+main{max-width:1080px;margin:0 auto;padding:14px 12px 60px}
+section.lab{display:none}
+section.lab.on{display:block}
+.lab h2{font-size:20px;margin:6px 0 4px;font-weight:900}
+.lab h2 .no{display:inline-block;background:var(--pri);color:#fff;border-radius:7px;font-size:13px;padding:2px 8px;margin-right:6px;vertical-align:3px}
+.goal{background:var(--pri2);border-left:4px solid var(--pri);border-radius:8px;padding:9px 12px;font-size:13.5px;margin:8px 0 14px;color:#174a60}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,60,90,.04)}
+.card h3{margin:0 0 4px;font-size:16px;font-weight:700}
+.card h3 .tag{font-size:11.5px;font-weight:700;background:var(--gold2);color:#9a6500;border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.card .sub{font-size:13px;color:var(--mute);margin:0 0 10px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:6px 0 10px;font-size:13.5px}
+.ctl label{display:flex;align-items:center;gap:6px}
+.ctl input[type=number]{width:58px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:7px}
+.ctl select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:#fff}
+.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 11px;cursor:pointer;color:var(--ink)}
+.btn:hover{border-color:var(--pri)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.acc{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.ghost{background:var(--pri2);border-color:transparent;color:#0f6f96}
+.btn:disabled{opacity:.4;cursor:default}
+.stepper{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+.stepbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.stepbar .cnt{font-family:var(--mono);font-size:12.5px;color:var(--mute);min-width:64px;text-align:center}
+.stepper input[type=range]{width:100%;margin:8px 0 2px;accent-color:var(--pri)}
+.msg{background:#f7fafc;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:8px;min-height:44px}
+.msg b{color:#0f6f96}
+.msg .eq{font-family:var(--mono);background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px;white-space:nowrap}
+.big{font-size:22px;font-weight:900;color:var(--pri)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.vcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px;scroll-margin-top:70px}
+.vcard.hl{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold2)}
+.vcard video{width:100%;aspect-ratio:9/16;background:#000;border-radius:9px;display:block;object-fit:contain}
+.vcard .vs{font-size:11.5px;font-weight:700;background:var(--pri2);color:var(--pri);border-radius:5px;padding:1px 7px;align-self:flex-start}
+.vcard .vt{font-weight:700;font-size:14.5px;line-height:1.4}
+.vcard .vd{font-size:12.5px;color:var(--mute)}
+.vcard .vgo{font-size:12.5px;font-weight:700;color:var(--pri);cursor:pointer;background:none;border:0;padding:0;text-align:left;font-family:inherit}
+.vin{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,220px));gap:12px;margin-bottom:14px}
+.vin-h{font-size:13.5px;font-weight:700;margin:0 0 6px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+.scroll{overflow-x:auto}
+svg{display:block;max-width:100%;height:auto}
+table.t{border-collapse:collapse;font-size:13px;margin:0 auto}
+table.t th,table.t td{border:1px solid var(--line);padding:4px 7px;text-align:center;min-width:34px}
+table.t th{background:#f1f6fa;color:var(--mute);font-weight:500}
+td.hit{background:var(--acc2);color:#0b7a3c;font-weight:700}
+td.cur{background:var(--gold2);outline:2px solid var(--gold);outline-offset:-2px;font-weight:700}
+td.dim{color:#b9c4cf}
+.slots{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+.slot{width:74px;border:2px solid var(--line);border-radius:10px;text-align:center;padding:6px 0;background:#fff}
+.slot .k{font-size:11px;color:var(--mute)}
+.slot .v{font-size:22px;font-weight:900;color:#b9c4cf}
+.slot.on{border-color:var(--pri);background:var(--pri2)}
+.slot.on .v{color:var(--pri)}
+.slot.done .v{color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{font-family:var(--mono);font-size:13px;border:1px solid var(--line);border-radius:7px;padding:3px 8px;background:#fff;cursor:pointer;user-select:none}
+.chip.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.chip.ok{background:var(--acc2);border-color:var(--acc);color:#0b7a3c}
+.chip.new{background:var(--gold2);border-color:var(--gold)}
+.list{font-family:var(--mono);font-size:12.5px;display:flex;flex-wrap:wrap;gap:4px;max-height:220px;overflow:auto;padding:4px;border:1px solid var(--line);border-radius:8px;background:#fbfdfe}
+.list span{padding:1px 6px;border-radius:5px;background:#eef4f8}
+.list span.cur{background:var(--gold);color:#fff}
+.pas{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:max-content;padding:4px 8px}
+.pas .row{display:flex;gap:4px}
+.pas .c{width:38px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12.5px;background:#eef4f8;color:transparent;cursor:pointer;transition:.15s}
+.pas .c.v{color:var(--ink)}
+.pas .c.par{background:var(--acc2);outline:2px solid var(--acc);color:#0b7a3c;font-weight:700}
+.pas .c.cur{background:var(--gold);color:#fff;font-weight:700}
+.pas .rl{width:30px;font-size:11px;color:var(--mute);display:flex;align-items:center}
+.code{font-family:var(--mono);font-size:12.5px;background:#0f2533;color:#cfe7f3;border-radius:10px;padding:10px 0;overflow-x:auto}
+.code div{padding:1px 12px;white-space:pre}
+.code div.hl{background:#1f5a78;color:#fff}
+.stack{display:flex;flex-direction:column-reverse;gap:4px;min-height:60px}
+.frame{font-family:var(--mono);font-size:12.5px;border:1px solid var(--line);border-radius:7px;padding:4px 8px;background:#fff}
+.frame.top{border-color:var(--pri);background:var(--pri2);font-weight:700}
+.frame.ret{border-color:var(--acc);background:var(--acc2)}
+.unfold{font-family:var(--mono);font-size:13px}
+.unfold div{padding:2px 6px;border-radius:5px}
+.unfold div.cur{background:var(--gold2)}
+.unfold .val{color:var(--acc);font-weight:700}
+.kpi{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.kpi div{background:#f7fafc;border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:12px;color:var(--mute)}
+.kpi b{display:block;font-size:17px;color:var(--ink);font-family:var(--mono)}
+.quiz{background:var(--gold2);border:1px solid #f3d793;border-radius:12px;padding:12px;margin-top:4px}
+.quiz .q{font-weight:700;font-size:14px;margin-bottom:6px}
+.quiz input{font:inherit;padding:5px 8px;border:1px solid #e3c779;border-radius:7px;width:120px}
+.quiz .res{margin-left:6px;font-size:13.5px;font-weight:700}
+.quiz .res.ok{color:var(--acc)}.quiz .res.no{color:var(--warn)}
+.bars .r{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}
+.bars .w{width:74px;font-family:var(--mono)}
+.bars .bg{flex:1;background:#eef4f8;border-radius:6px;height:20px;position:relative;overflow:hidden}
+.bars .fg{position:absolute;inset:0 auto 0 0;background:var(--pri);border-radius:6px;transition:width .3s}
+.bars .r.win .fg{background:var(--acc)}
+.bars .p{width:50px;text-align:right;font-family:var(--mono);font-size:12.5px}
+.sentence{font-size:19px;font-weight:700;margin:8px 0;padding:10px 12px;background:#f7fafc;border-radius:10px;border:1px solid var(--line)}
+.sentence .nw{color:var(--acc);border-bottom:3px solid var(--acc)}
+.holes{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0}
+.hole{width:78px;min-height:84px;border:2px solid var(--line);border-radius:10px;background:#fff;padding:4px;display:flex;flex-direction:column;align-items:center}
+.hole .lab{font-size:11px;color:var(--mute)}
+.hole .bd{display:flex;flex-wrap:wrap;gap:1px;justify-content:center;font-size:20px;line-height:1.1}
+.hole.dup{border-color:var(--warn);background:var(--warn2)}
+.hole.last{border-color:var(--gold);background:var(--gold2)}
+.note{font-size:12.5px;color:var(--mute)}
+.fx{font-family:var(--mono);font-size:13.5px;background:#f7fafc;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;overflow-x:auto;white-space:nowrap}
+footer{text-align:center;font-size:12px;color:var(--mute);padding:10px 0 30px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;border:0;background:#fff;padding:5px 11px;cursor:pointer;color:var(--mute)}
+.seg button.on{background:var(--pri);color:#fff}
+.mat{display:inline-grid;gap:3px 4px;padding:5px 11px;position:relative;font-family:var(--mono);font-size:14.5px;vertical-align:middle;margin:2px 0}
+.mat::before,.mat::after{content:"";position:absolute;top:0;bottom:0;width:6px;border:2px solid var(--ink)}
+.mat::before{left:0;border-right:0}.mat::after{right:0;border-left:0}
+.mat.det::before{border-top:0;border-bottom:0;width:0}.mat.det::after{border-top:0;border-bottom:0;width:0}
+.mat>span{min-width:30px;text-align:right;padding:2px 5px;border-radius:5px;white-space:nowrap}
+.mat>span.h{background:var(--pri2);color:#0d6d93;font-weight:700}
+.mat>span.g{background:var(--gold2);color:#9a6500;font-weight:700}
+.mat>span.h2{background:var(--gold);color:#fff;font-weight:700}
+.mat>span.h3{background:var(--acc2);color:#0b7a3c;font-weight:700}
+.mat>span.neg{background:var(--warn2);color:var(--warn);font-weight:700}
+.mat>span.pv{box-shadow:inset 0 0 0 2px var(--pri);border-radius:999px;text-align:center;font-weight:700}
+.mat>span.el{box-shadow:inset 0 0 0 2px var(--gold);background:var(--gold2)}
+.mat>span.q{color:#b9c4cf}
+.mat>span.cp{color:#9aa6b2;background:#f3f6f9}
+.mat>span.zr{color:#b9c4cf}
+.mat>span.aug{border-left:2px solid var(--mute);border-radius:0 5px 5px 0;padding-left:9px}
+.mat.sm{font-size:11.5px;gap:1px 2px;padding:3px 8px}.mat.sm>span{min-width:14px;padding:0 3px}
+.mat.ed input{width:54px;font:inherit;font-size:14px;text-align:right;padding:3px 5px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
+.mat.ed input:focus{outline:2px solid var(--pri);outline-offset:0}
+.mat.ed input.hl{background:var(--gold2);border-color:var(--gold);font-weight:700}
+.eqrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:8px 0}
+.eqrow.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+.op{font-size:20px;font-weight:700;color:var(--mute)}
+.lbl{font-family:var(--mono);font-weight:700;font-size:14px;white-space:nowrap}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.badge{font-size:12.5px;border-radius:999px;padding:3px 10px;border:1px solid var(--line);color:#9aa6b2;background:#fff;cursor:default}
+.badge.ok{background:var(--acc2);border-color:var(--acc);color:#0b7a3c;font-weight:700}
+.pix{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;width:100%;max-width:280px;aspect-ratio:1;margin:0 auto;touch-action:none;user-select:none}
+.pix div{background:#eef4f8;border-radius:4px;cursor:pointer}
+.pix div.dg{box-shadow:inset 0 0 0 2px var(--gold)}
+.pix div.on{background:var(--pri)}
+.cg{display:inline-grid;gap:3px}
+.cg div{width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;background:#eef4f8;border-radius:5px;cursor:default}
+#s9in .cg div{cursor:pointer}
+.cg div.w{background:var(--pri2);box-shadow:inset 0 0 0 2px var(--pri);font-weight:700}
+.cg div.f{background:var(--gold2);color:#9a6500;font-weight:700}
+.cg div.r{background:var(--acc2);color:#0b7a3c;font-weight:700}
+.cg div.cur{background:var(--gold);color:#fff;font-weight:700}
+.cg div.e{color:transparent}
+canvas{width:100%;max-width:320px;height:auto;display:block;margin:0 auto;border-radius:8px;touch-action:none}
+.ctl input.k{width:64px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:7px}
+.ctl input[type=range]{accent-color:var(--pri);width:120px}
+.ctl label b{font-family:var(--mono);min-width:34px;display:inline-block}
+.btn:focus-visible,.tabs button:focus-visible,.seg button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.msg .mat{font-size:13px}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="hdrow">
+    <div>
+      <div class="ch">DISCRETE MATHEMATICS · CHAPTER 10</div>
+      <h1>행렬과 행렬식<br>실생활·AI 활용 실험실</h1>
+      <p>교재 예제를 한 단계씩 따라 하고, 같은 원리가 생활과 인공지능에서 어떻게 쓰이는지 직접 조작해 봅니다 · <a href="/" style="color:#fff">강의 실습실로</a></p>
+    </div>
+    <div class="speed">자동 재생 속도
+      <select id="speed"><option value="1400">느리게</option><option value="800" selected>보통</option><option value="350">빠르게</option><option value="90">매우 빠르게</option></select>
+    </div>
+  </div>
+</header>
+<nav><div class="tabs" id="tabs"></div></nav>
+<main id="main">
+
+<!-- ========== 10.1 ========== -->
+<section class="lab" id="m1">
+  <h2><span class="no">10.1</span>행렬과 행렬의 연산</h2>
+  <div class="goal">행렬은 수를 <b>행(가로줄)</b>과 <b>열(세로줄)</b>로 늘어놓은 표입니다. 행이 m개, 열이 n개면 <span class="eq">m×n 행렬</span>, i행 j열의 값은 <span class="eq">a<sub>ij</sub></span>. 성적표·판매표·장보기 영수증처럼 생활 속 표가 모두 행렬입니다.</div>
+
+  <div class="card">
+    <h3>행렬 읽기: 우리 반 성적표<span class="tag">여기서 잠깐 · 예제 10-1</span></h3>
+    <p class="sub">칸을 눌러 보세요. 그 칸의 이름 a<sub>ij</sub>와 함께, 같은 행(한 학생의 성적 = 행벡터)과 같은 열(한 과목의 점수 = 열벡터)이 표시됩니다.</p>
+    <div class="grid2"><div class="scroll"><table class="t" id="s1tbl"></table></div><div class="msg" id="s1info" style="margin-top:0"></div></div>
+  </div>
+
+  <div class="card">
+    <h3>행렬의 덧셈 · 뺄셈 · 스칼라 곱<span class="tag">정의 10-2, 10-3 · 예제 10-2 ~ 10-4</span></h3>
+    <p class="sub">같은 크기의 행렬끼리 <b>같은 자리의 성분</b>끼리 계산합니다. 식 <b>p·A + q·B</b>에서 p, q를 바꾸면 덧셈(1, 1), 뺄셈(1, −1), 스칼라 곱(k, 0)을 모두 해볼 수 있어요. 칸의 숫자도 직접 고칠 수 있습니다.</p>
+    <div class="ctl"><span class="note">예시</span>
+      <button class="btn ghost" data-s1b="e2">예제 10-2 (A+B)</button><button class="btn ghost" data-s1b="e3">예제 10-3</button><button class="btn ghost" data-s1b="e4">예제 10-4 (2A−3B)</button><button class="btn ghost" data-s1b="shop">생활: 두 달 판매량 합치기</button><button class="btn ghost" data-s1b="price">생활: 가격 10% 인상</button></div>
+    <div class="ctl"><label>p <input type="number" id="s1p" value="1" step="0.1"></label><label>q <input type="number" id="s1q" value="1" step="0.1"></label></div>
+    <div class="eqrow" id="s1bshow"><span class="lbl" id="s1bpl"></span><span id="s1bA"></span><span class="lbl" id="s1bql"></span><span id="s1bB"></span><span class="op">=</span><span id="s1bR"></span></div>
+    <div class="note" id="s1bstory"></div>
+    <div class="stepper" id="s1bst"></div>
+  </div>
+
+  <div class="card">
+    <h3>행렬의 곱: 행 × 열<span class="tag">정의 10-4 · 그림 10.1 · 예제 10-5 ~ 10-7</span></h3>
+    <p class="sub">AB의 (i, j) 성분은 A의 <b>i행</b>과 B의 <b>j열</b>을 짝지어 곱한 뒤 모두 더한 값입니다. A의 열 수와 B의 행 수(내측)가 같아야 곱할 수 있고, 결과의 크기는 바깥쪽 두 수(외측)입니다.</p>
+    <div class="ctl"><span class="note">예시</span>
+      <button class="btn ghost" data-s1c="e5">예제 10-5</button><button class="btn ghost" data-s1c="e6">예제 10-6</button><button class="btn ghost" data-s1c="e7a">예제 10-7 (1)</button><button class="btn ghost" data-s1c="e7b">예제 10-7 (2)</button><button class="btn ghost" data-s1c="shop">생활: 어느 마트가 쌀까?</button><button class="btn ghost" data-s1c="comm">AB ≠ BA</button></div>
+    <div class="ctl"><label>A 크기 <select id="s1ma"></select> × <select id="s1na"></select></label><label>B 크기 <select id="s1nb"></select> × <select id="s1pb"></select></label><button class="btn" id="s1swap">순서 바꾸기 (A ↔ B)</button></div>
+    <div class="fx" id="s1size"></div>
+    <div class="eqrow" id="s1cshow"><span class="lbl">A</span><span id="s1cA"></span><span class="lbl">B</span><span id="s1cB"></span><span class="op">=</span><span id="s1cR"></span></div>
+    <div class="note" id="s1cstory"></div>
+    <div class="stepper" id="s1cst"></div>
+  </div>
+  <div class="quiz" data-q="m1"></div>
+</section>
+
+<!-- ========== 10.2 ========== -->
+<section class="lab" id="m2">
+  <h2><span class="no">10.2</span>특수한 행렬</h2>
+  <div class="goal">정방행렬 가운데 모양이 특별한 것들에는 이름이 있습니다. <b>대각·항등·영행렬</b>, 행과 열을 바꾼 <b>전치행렬 Aᵀ</b>, 자기 전치와 같은 <b>대칭행렬</b>, 부호만 반대인 <b>교대행렬</b>, 한쪽이 0인 <b>삼각행렬</b>. 사진 회전, 친구 관계표처럼 생활 속 행렬도 이런 모양을 가집니다.</div>
+
+  <div class="card">
+    <h3>특수 행렬 판별기<span class="tag">정의 10-5 ~ 10-12 · 예제 10-9</span></h3>
+    <p class="sub">칸의 숫자를 바꾸면 어떤 특수 행렬인지 바로 판별합니다. 칸을 클릭하면 주대각선을 기준으로 마주 보는 칸 a<sub>ji</sub>도 함께 표시돼 대칭·교대 여부를 확인하기 쉽습니다.</p>
+    <div class="ctl"><label>크기 n <select id="s2n"><option>2</option><option selected>3</option><option>4</option></select></label><span class="note">예시</span>
+      <button class="btn ghost" data-s2="diag">대각</button><button class="btn ghost" data-s2="I">항등 I₃</button><button class="btn ghost" data-s2="O">영행렬</button><button class="btn ghost" data-s2="sym">대칭 (예제 10-9)</button><button class="btn ghost" data-s2="skew">교대 (정의 10-11)</button><button class="btn ghost" data-s2="up">상부삼각</button><button class="btn ghost" data-s2="low">하부삼각</button><button class="btn ghost" data-s2="gen">일반</button></div>
+    <div class="grid2">
+      <div><div class="note">A (직접 수정 가능)</div><div id="s2A"></div><div class="note" style="margin-top:8px">전치행렬 Aᵀ (A의 i행 → Aᵀ의 i열)</div><div id="s2T"></div></div>
+      <div><div class="badges" id="s2badges"></div><div class="msg" id="s2out"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>생활 속 행렬: 사진 뒤집기와 돌리기<span class="tag">전치행렬의 활용</span></h3>
+    <p class="sub">디지털 사진은 픽셀 밝기를 모은 행렬입니다. 칸을 눌러(끌어서) 그림을 그리고 버튼을 눌러 보세요. <b>전치(Aᵀ)</b>는 점선 대각선을 거울 삼아 뒤집고, <b>전치한 뒤 좌우 반전</b>하면 사진이 시계 방향으로 90° 돌아갑니다. 스마트폰 사진 회전이 바로 이 계산입니다.</p>
+    <div class="ctl"><button class="btn pri" data-s2p="t">전치 Aᵀ</button><button class="btn" data-s2p="h">좌우 반전</button><button class="btn" data-s2p="v">상하 반전</button><button class="btn acc" data-s2p="r">시계 방향 90° 회전</button><button class="btn" data-s2p="z">처음 그림</button><button class="btn" data-s2p="c">지우기</button></div>
+    <div class="grid2"><div class="pix" id="s2pix"></div><div><div class="note">행렬로 보면 (1 = 칠한 칸)</div><div class="scroll" id="s2pm"></div><div class="msg" id="s2pmsg"></div></div></div>
+  </div>
+  <div class="quiz" data-q="m2"></div>
+</section>
+
+<!-- ========== 10.3 ========== -->
+<section class="lab" id="m3">
+  <h2><span class="no">10.3</span>행렬의 기본 연산과 사다리꼴</h2>
+  <div class="goal">세 가지 <b>기본 행 연산</b>(행 바꾸기, 한 행에 k배, k배 해서 다른 행에 더하기)으로 행렬을 계단 모양의 <b>행 사다리꼴(REF)</b>과 <b>기약 행 사다리꼴(RREF)</b>로 바꿉니다. 0이 아닌 행의 수가 <b>계수(rank)</b>. 그래프를 행렬로 쓰는 <b>인접 행렬</b>은 SNS 친구 추천에 쓰입니다.</div>
+
+  <div class="card">
+    <h3>기본 행 연산 직접 해보기<span class="tag">정의 10-13 ~ 10-16 · 예제 10-10, 10-13</span></h3>
+    <p class="sub">동그라미는 각 행의 <b>피벗</b>(0이 아닌 첫 수)입니다. 연산을 골라 적용하면서 REF → RREF를 만들어 보세요. k에는 −2, 1/3 같은 분수도 넣을 수 있습니다.</p>
+    <div class="ctl"><span class="note">시작 행렬</span>
+      <button class="btn ghost" data-s3="e13">예제 10-13</button><button class="btn ghost" data-s3="e10">예제 10-10 (I₃)</button><button class="btn ghost" data-s3="e17">예제 10-17</button><button class="btn ghost" data-s3="sys">예제 10-20 첨가행렬</button><button class="btn ghost" data-s3="rk">계수가 2인 행렬</button></div>
+    <div class="ctl">
+      <select id="s3type"><option value="3">Type Ⅲ: k×(한 행)을 다른 행에 더하기</option><option value="1">Type Ⅰ: 두 행 바꾸기</option><option value="2">Type Ⅱ: 한 행에 k(≠0)배</option></select>
+      <label id="s3kl">k <input class="k" id="s3k" value="-2"></label><label>행 <select id="s3i"></select></label><label id="s3jl">대상 행 <select id="s3j"></select></label>
+      <button class="btn pri" id="s3go">적용</button><button class="btn" id="s3undo">되돌리기</button><button class="btn" id="s3reset">처음으로</button></div>
+    <div class="fx" id="s3opfx"></div>
+    <div class="eqrow"><span id="s3M"></span><div id="s3stat" style="flex:1;min-width:220px"></div></div>
+    <div class="msg" id="s3log"></div>
+  </div>
+
+  <div class="card">
+    <h3>가우스–조단 소거법 자동 풀이<span class="tag">정의 10-17 ~ 10-19</span></h3>
+    <p class="sub">전향단계(피벗 아래를 0으로)까지 하면 <b>가우스 소거법</b> → 행 사다리꼴, 후향단계(피벗 위도 0으로)까지 하면 <b>가우스–조단 소거법</b> → 기약 행 사다리꼴입니다. 주황 테두리는 이번에 0으로 만드는 칸입니다.</p>
+    <div class="ctl"><span class="note">행렬</span>
+      <button class="btn ghost" data-s3b="e13">예제 10-13</button><button class="btn ghost" data-s3b="e17">예제 10-17</button><button class="btn ghost" data-s3b="sys">예제 10-20 첨가행렬</button><button class="btn ghost" data-s3b="rk">계수가 2인 행렬</button><button class="btn" id="s3bfrom">위 카드의 현재 행렬 가져오기</button></div>
+    <div class="note" id="s3blabel"></div>
+    <div class="eqrow" id="s3bM"></div>
+    <div class="stepper" id="s3bst"></div>
+  </div>
+
+  <div class="card">
+    <h3>생활 속 행렬: 친구 관계표와 친구 추천<span class="tag">10.3 (3) 행렬의 표현과 응용</span></h3>
+    <p class="sub">사람을 점, 친구 관계를 선으로 그린 그래프를 <b>인접 행렬</b> A로 적습니다(친구면 1). 선이나 표의 칸을 눌러 관계를 바꿔 보세요. <b>A² = A·A</b>의 (i, j) 값은 두 사람의 <b>공통 친구 수</b>여서, SNS의 “알 수도 있는 사람” 추천에 쓰입니다.</p>
+    <div class="grid2"><svg id="s3g" viewBox="0 0 330 260"></svg><div><div class="note">인접 행렬 A (칸을 눌러 바꾸기)</div><div class="scroll" id="s3adj"></div><div class="note" style="margin-top:8px">A² = A·A (노란 칸 = 추천 후보)</div><div class="scroll" id="s3a2"></div></div></div>
+    <div class="msg" id="s3rec"></div>
+  </div>
+  <div class="quiz" data-q="m3"></div>
+</section>
+
+<!-- ========== 10.4 ========== -->
+<section class="lab" id="m4">
+  <h2><span class="no">10.4</span>행렬식의 개념</h2>
+  <div class="goal">행렬식 <span class="eq">Det(A) = |A|</span>는 정방행렬 하나에 수 하나를 대응시킵니다. 2×2는 <span class="eq">ad − bc</span>, 3×3은 <b>사루스의 공식</b>. 그림으로 보면 행렬식은 행렬이 만드는 도형의 <b>넓이(부피)</b>이고, |A| = 0이면 <b>특이행렬</b>, 아니면 <b>정칙행렬</b>입니다.</div>
+
+  <div class="card">
+    <h3>2×2 행렬식 = 평행사변형의 넓이<span class="tag">정의 10-21 · 예제 10-14 · 정의 10-23</span></h3>
+    <p class="sub">두 열벡터 (a, c)와 (b, d)가 만드는 평행사변형의 넓이가 |ad − bc|입니다. 슬라이더를 움직여 보세요. 행렬식이 0이 되면 평행사변형이 납작해집니다.</p>
+    <div class="ctl"><span class="note">예시</span><button class="btn ghost" data-s4="e14a">예제 10-14 A</button><button class="btn ghost" data-s4="e14b">예제 10-14 B</button><button class="btn ghost" data-s4="sing">특이행렬</button><button class="btn ghost" data-s4="I">항등행렬</button></div>
+    <div class="ctl">
+      <label>a <input type="range" id="s4a" min="-4" max="4" step="0.5" value="2"> <b id="s4av"></b></label>
+      <label>b <input type="range" id="s4b" min="-4" max="4" step="0.5" value="1"> <b id="s4bv"></b></label>
+      <label>c <input type="range" id="s4c" min="-4" max="4" step="0.5" value="1"> <b id="s4cv"></b></label>
+      <label>d <input type="range" id="s4d" min="-4" max="4" step="0.5" value="4"> <b id="s4dv"></b></label></div>
+    <div class="grid2"><svg id="s4svg" viewBox="0 0 320 320"></svg><div><div class="eqrow" id="s4M"></div><div class="msg" id="s4out"></div></div></div>
+  </div>
+
+  <div class="card">
+    <h3>사루스의 공식으로 3×3 행렬식 구하기<span class="tag">정의 10-22 · 예제 10-15 · 그림 10.3</span></h3>
+    <p class="sub">1열과 2열을 오른쪽에 한 번 더 써 놓고, ↘ 방향 대각선 3개의 곱은 더하고(+, 파랑), ↙ 방향 대각선 3개의 곱은 뺍니다(−, 빨강). 숫자를 바꿔 다른 행렬도 계산해 보세요.</p>
+    <div class="ctl"><span class="note">예시</span><button class="btn ghost" data-s4b="e15">예제 10-15</button><button class="btn ghost" data-s4b="same">두 행이 같은 행렬</button><button class="btn ghost" data-s4b="diag">대각행렬 (예제 10-16)</button></div>
+    <div class="eqrow"><span id="s4bEd"></span><span class="op">→</span><span id="s4bX"></span></div>
+    <div class="stepper" id="s4bst"></div>
+  </div>
+  <div class="quiz" data-q="m4"></div>
+</section>
+
+<!-- ========== 10.5 ========== -->
+<section class="lab" id="m5">
+  <h2><span class="no">10.5</span>행렬식의 일반적인 성질</h2>
+  <div class="goal">행을 바꾸면 부호가 바뀌고, 한 행에 k를 곱하면 k배, 한 행의 k배를 다른 행에 더하면 <b>그대로</b>입니다. 이 성질 덕분에 큰 행렬도 <b>상부삼각행렬로 만든 뒤 대각선만 곱하면</b> 행렬식을 빠르게 구할 수 있습니다. 컴퓨터도 이 방법을 씁니다.</div>
+
+  <div class="card">
+    <h3>행렬식 성질 실험실<span class="tag">정리 10-3 ~ 10-9</span></h3>
+    <p class="sub">행렬 A에 한 가지 변화를 준 뒤 행렬식이 어떻게 변하는지 비교합니다. A의 숫자를 바꿔 여러 번 실험해 보세요.</p>
+    <div class="ctl"><span class="note">A 예시</span><button class="btn ghost" data-s5="[[1,2,3],[2,3,5],[3,-3,7]]">예제 10-17</button><button class="btn ghost" data-s5="[[1,2,3],[2,1,3],[3,1,2]]">예제 10-15</button><button class="btn ghost" data-s5="[[2,0,0],[0,3,0],[0,0,4]]">대각행렬</button></div>
+    <div id="s5A"></div>
+    <div class="ctl"><select id="s5op">
+      <option value="swap">두 행 바꾸기 R1 ↔ R2 (정리 10-4)</option>
+      <option value="same">두 행을 같게 R3 := R2 (정리 10-3)</option>
+      <option value="trans">전치 Aᵀ (정리 10-5)</option>
+      <option value="mulk">한 행에 k배 k×R1 (정리 10-7)</option>
+      <option value="zero">한 행을 모두 0으로 (정리 10-8)</option>
+      <option value="addk">k×R1을 R2에 더하기 (정리 10-9 ③)</option>
+      <option value="prod">다른 행렬 B와 곱하기 AB (정리 10-6)</option></select>
+      <label>k <input type="number" id="s5k" value="5"></label><button class="btn" id="s5newB">B 다시 뽑기</button></div>
+    <div class="eqrow" id="s5show"></div>
+    <div class="msg" id="s5out"></div>
+  </div>
+
+  <div class="card">
+    <h3>행 연산으로 행렬식 구하기<span class="tag">정리 10-9 · 예제 10-17</span></h3>
+    <p class="sub">피벗 아래를 0으로 만들어 상부삼각행렬을 만든 다음 대각선 성분만 곱합니다. 행을 바꿀 때마다 앞에 − 부호가 붙는 것도 확인해 보세요.</p>
+    <div class="ctl"><span class="note">행렬</span><button class="btn ghost" data-s5b="e17">예제 10-17</button><button class="btn ghost" data-s5b="e15">예제 10-15</button><button class="btn ghost" data-s5b="sw">행 바꾸기가 필요한 행렬</button><button class="btn ghost" data-s5b="e16">대각행렬 (예제 10-16)</button></div>
+    <div class="eqrow" id="s5bM"></div>
+    <div class="stepper" id="s5bst"></div>
+  </div>
+  <div class="quiz" data-q="m5"></div>
+</section>
+
+<!-- ========== 10.6 ========== -->
+<section class="lab" id="m6">
+  <h2><span class="no">10.6</span>역행렬</h2>
+  <div class="goal">수에서 3 × (1/3) = 1이듯, <span class="eq">A·A⁻¹ = A⁻¹·A = I</span>가 되는 행렬 A⁻¹이 역행렬입니다. <b>[A | I] → [I | A⁻¹]</b>로 바꾸는 가우스–조단 방법으로 구하고, |A| = 0이면 역행렬이 없습니다. “잠그고(A) 푸는(A⁻¹)” 행렬 암호가 대표적인 활용입니다.</div>
+
+  <div class="card">
+    <h3>가우스–조단으로 역행렬 구하기<span class="tag">정의 10-24, 10-25 · 정리 10-10 · 그림 10.4 · 예제 10-18, 10-19</span></h3>
+    <p class="sub">A 옆에 항등행렬 I를 붙인 첨가행렬에서, 왼쪽이 I가 될 때까지 행 연산을 합니다. 오른쪽에 남는 것이 A⁻¹입니다. 도중에 왼쪽이 0뿐인 행이 생기면 역행렬이 없습니다.</p>
+    <div class="ctl"><span class="note">A 예시</span><button class="btn ghost" data-s6="e19">예제 10-19</button><button class="btn ghost" data-s6="e18">예제 10-18</button><button class="btn ghost" data-s6="e20">예제 10-20의 A (3×3)</button><button class="btn ghost" data-s6="sing">역행렬이 없는 경우</button><label>크기 <select id="s6n"><option>2</option><option>3</option></select></label></div>
+    <div id="s6Ed"></div>
+    <div class="eqrow scroll" id="s6M"></div>
+    <div class="stepper" id="s6st"></div>
+  </div>
+
+  <div class="card">
+    <h3>생활 속 행렬: 행렬 암호 — 잠그기는 K, 풀기는 K⁻¹<span class="tag">10.9 암호 해독 · 역행렬의 활용</span></h3>
+    <p class="sub">글자를 숫자로 바꿔(A=1 … Z=26, 공백=0) 두 개씩 세로로 묶은 행렬 M을 만들고, 열쇠 행렬 K를 곱해 암호문 E = K·M을 보냅니다. 받는 사람은 K⁻¹을 곱해 M = K⁻¹·E로 되돌립니다. 보낼 말을 영어로 바꿔 보세요.</p>
+    <div class="ctl"><label>보낼 말 <input id="s6msg" value="MATRIX" maxlength="16" style="width:150px;font:inherit;padding:4px 7px;border:1px solid var(--line);border-radius:7px;text-transform:uppercase"></label>
+      <label>열쇠 K <select id="s6key"><option value="a">[3 4; 2 3] (예제 10-19)</option><option value="b">[2 5; 1 3] (예제 10-18)</option><option value="c">[1 2; 2 4] (특이행렬)</option></select></label></div>
+    <div class="eqrow scroll" id="s6c"></div>
+    <div class="stepper" id="s6cst"></div>
+  </div>
+  <div class="quiz" data-q="m6"></div>
+</section>
+
+<!-- ========== 10.7 ========== -->
+<section class="lab" id="m7">
+  <h2><span class="no">10.7</span>선형 방정식의 해법</h2>
+  <div class="goal">연립방정식을 <span class="eq">Ax = b</span>로 쓰면 A가 가역일 때 해는 <span class="eq">x = A⁻¹b</span> 하나뿐입니다(정리 10-11). 첨가행렬 [A | b]를 가우스–조단으로 정리해도 해를 바로 읽을 수 있고, 해가 <b>하나 · 없음 · 무수히 많음</b>도 구별할 수 있습니다.</div>
+
+  <div class="card">
+    <h3>역행렬로 풀기: x = A⁻¹b<span class="tag">정리 10-11 · 그림 10.5 · 예제 10-20</span></h3>
+    <p class="sub">A⁻¹을 한 번 구해 두면 오른쪽 값 b가 바뀌어도 A⁻¹b만 곱해 바로 답이 나옵니다. b₁, b₂, b₃를 바꿔 보세요.</p>
+    <div class="fx" id="s7eq"></div>
+    <div class="ctl"><label>b₁ <input type="number" id="s7b1" value="1"></label><label>b₂ <input type="number" id="s7b2" value="3"></label><label>b₃ <input type="number" id="s7b3" value="5"></label></div>
+    <div class="eqrow scroll" id="s7show"></div>
+    <div class="stepper" id="s7st"></div>
+  </div>
+
+  <div class="card">
+    <h3>첨가행렬 [A | b]를 소거법으로 풀기<span class="tag">정의 10-25 · 가우스–조단 소거법</span></h3>
+    <p class="sub">기약 행 사다리꼴이 되면 각 행이 “x = □” 꼴이 되어 해를 바로 읽습니다. 해가 없거나 무수히 많은 경우는 어떻게 보이는지도 비교해 보세요.</p>
+    <div class="ctl"><span class="note">문제</span><button class="btn ghost" data-s7b="e20">예제 10-20</button><button class="btn ghost" data-s7b="fruit">생활: 과일 가격 구하기</button><button class="btn ghost" data-s7b="none">해가 없는 경우</button><button class="btn ghost" data-s7b="many">해가 무수히 많은 경우</button></div>
+    <div class="note" id="s7bstory"></div>
+    <div class="eqrow" id="s7bM"></div>
+    <div class="stepper" id="s7bst"></div>
+  </div>
+
+  <div class="card">
+    <h3>생활 속 연립방정식: 분식집 가격 맞히기<span class="tag">연립방정식과 행렬식</span></h3>
+    <p class="sub">김밥 한 줄을 x천 원, 라면 한 그릇을 y천 원이라 하면 주문서 두 장이 두 직선이 되고, 두 직선의 교점이 가격입니다. 계수 행렬의 행렬식이 0이면 두 직선이 평행(해 없음)하거나 겹칩니다(해 무수히 많음).</p>
+    <div class="ctl"><span class="note">예시</span><button class="btn ghost" data-s7c="food">분식집 주문서</button><button class="btn ghost" data-s7c="par">모순된 주문서</button><button class="btn ghost" data-s7c="same">같은 주문서 두 장</button></div>
+    <div class="ctl"><label><input type="number" id="s7a1" value="2" step="0.5"> x +</label><label><input type="number" id="s7b1c" value="1" step="0.5"> y =</label><label><input type="number" id="s7c1" value="10" step="0.5"></label></div>
+    <div class="ctl"><label><input type="number" id="s7a2" value="1" step="0.5"> x +</label><label><input type="number" id="s7b2c" value="2" step="0.5"> y =</label><label><input type="number" id="s7c2" value="11" step="0.5"></label></div>
+    <div class="grid2"><svg id="s7g" viewBox="0 0 320 320"></svg><div class="msg" id="s7gout" style="margin-top:0"></div></div>
+  </div>
+  <div class="quiz" data-q="m7"></div>
+</section>
+
+<!-- ========== 10.8 ========== -->
+<section class="lab" id="m8">
+  <h2><span class="no">10.8</span>신경망의 행렬 연산</h2>
+  <div class="goal">신경망은 <b>입력 × 연결강도(가중치)를 곱해서 더하는</b> 계산을 반복합니다. 이 계산 전체가 행렬 곱 <span class="eq">Y = X·W</span> 한 번이고, 층이 여러 개인 다층 신경망은 행렬 곱을 층마다 반복합니다. 챗봇·이미지 인식 AI의 계산 대부분이 이 행렬 곱입니다.</div>
+
+  <div class="card">
+    <h3>신경망 한 층 = 행렬 곱 X·W<span class="tag">그림 10.6 · 그림 10.8</span></h3>
+    <p class="sub">입력 x와 가중치 w를 바꿔 보세요. 선이 굵을수록 가중치가 크고, 빨간 선은 음수입니다. [다음 ▶]을 누르면 출력 y를 하나씩 계산합니다.</p>
+    <div class="ctl"><label>x₁ <input type="number" id="s8x1" value="1"></label><label>x₂ <input type="number" id="s8x2" value="2"></label></div>
+    <div class="grid2"><svg id="s8svg" viewBox="0 0 340 260"></svg><div><div class="note">W (직접 수정 가능, 2×3)</div><div id="s8W"></div><div class="eqrow scroll" id="s8eq"></div></div></div>
+    <div class="stepper" id="s8st"></div>
+  </div>
+
+  <div class="card">
+    <h3>다층 신경망: 사과일까 귤일까?<span class="tag">그림 10.7 · 인공지능</span></h3>
+    <p class="sub">과일 사진에서 뽑은 특징 3개로 <b>사과</b>인지 <b>귤</b>인지 맞히는 작은 신경망입니다. 입력 → 은닉층(행렬 곱 + ReLU) → 출력층(행렬 곱 + 확률 변환). 가중치는 설명을 위해 정한 값입니다.</p>
+    <div class="ctl"><span class="note">과일</span><button class="btn ghost" data-s8b="apple">사과 같은 과일</button><button class="btn ghost" data-s8b="tang">귤 같은 과일</button><button class="btn ghost" data-s8b="mix">애매한 과일</button></div>
+    <div class="ctl">
+      <label>빨간 정도 <input type="range" id="s8f1" min="0" max="1" step="0.1" value="0.9"> <b id="s8f1v"></b></label>
+      <label>크기 <input type="range" id="s8f2" min="0" max="1" step="0.1" value="0.6"> <b id="s8f2v"></b></label>
+      <label>울퉁불퉁함 <input type="range" id="s8f3" min="0" max="1" step="0.1" value="0.1"> <b id="s8f3v"></b></label></div>
+    <div class="scroll"><svg id="s8b" viewBox="0 0 640 235" style="min-width:520px"></svg></div>
+    <div class="stepper" id="s8bst"></div>
+  </div>
+  <div class="quiz" data-q="m8"></div>
+</section>
+
+<!-- ========== 10.9 ========== -->
+<section class="lab" id="m9">
+  <h2><span class="no">10.9</span>행렬과 행렬식의 응용 분야와 인공지능</h2>
+  <div class="goal">행렬은 영상 인식(<b>CNN 합성곱</b>), 그래픽·지도·로봇의 <b>좌표 변환</b>, <b>교통 흐름</b> 분석, 암호에 쓰이고, 행렬식은 <b>넓이·부피</b> 계산과 연립방정식의 해 판별에 쓰입니다. 아래 네 가지를 직접 조작해 보세요.</div>
+
+  <div class="card">
+    <h3>합성곱(CNN): 필터를 밀면서 곱하고 더하기<span class="tag">그림 10.10 · CNN</span></h3>
+    <p class="sub">3×3 필터를 입력 위에 겹쳐 같은 자리끼리 곱한 뒤 모두 더하면 결과 한 칸이 나옵니다. 필터를 오른쪽·아래로 한 칸씩 옮기며 반복하면 5×5 입력에서 3×3 결과(특징 맵)가 만들어집니다. 입력 칸을 누르면 값이 바뀝니다(0~5).</p>
+    <div class="ctl"><span class="note">필터</span><span class="seg" id="s9fs"><button data-v="book" class="on">교재 필터</button><button data-v="vert">세로선 찾기</button><button data-v="hor">가로선 찾기</button><button data-v="avg">모두 더하기(흐리기)</button></span>
+      <span class="note">입력</span><button class="btn ghost" data-s9i="book">교재 데이터</button><button class="btn ghost" data-s9i="stripe">세로 줄무늬</button></div>
+    <div class="eqrow"><div id="s9in"></div><span class="op">⊛</span><div id="s9f"></div><span class="op">=</span><div id="s9out"></div></div>
+    <div class="stepper" id="s9st"></div>
+  </div>
+
+  <div class="card">
+    <h3>내 그림에 CNN 필터 적용하기<span class="tag">영상 인식 · 특징 추출</span></h3>
+    <p class="sub">왼쪽 칸에 마우스나 손가락으로 그림을 그리면, 오른쪽에 필터를 통과한 <b>특징 맵</b>이 바로 나타납니다(파랑 = 양수, 빨강 = 음수). 세로선 필터는 세로 경계를, 가로선 필터는 가로 경계를 찾아냅니다. CNN은 이런 필터 값을 사진 데이터로부터 스스로 학습합니다.</p>
+    <div class="ctl"><span class="seg" id="s9bf"><button data-v="vert" class="on">세로선</button><button data-v="hor">가로선</button><button data-v="edge">테두리</button><button data-v="blur">흐리게</button><button data-v="sharp">선명하게</button></span><button class="btn" id="s9bsample">예시 그림</button><button class="btn" id="s9bclr">지우기</button></div>
+    <div class="grid2"><div><div class="note">내 그림 (16×16 행렬)</div><canvas id="s9cv" width="320" height="320"></canvas></div><div><div class="note">특징 맵 (14×14 행렬)</div><canvas id="s9fm" width="320" height="320"></canvas></div></div>
+    <div class="msg" id="s9bmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>행렬로 그림 움직이기: 확대 · 회전 · 기울이기<span class="tag">좌표 변환 · 행렬식 = 넓이의 배율</span></h3>
+    <p class="sub">점 (x, y)에 2×2 행렬을 곱하면 새 위치로 옮겨집니다. 게임 그래픽, 지도 앱, 로봇 팔이 이런 계산을 합니다. 이때 그림의 넓이는 정확히 |det| 배가 됩니다.</p>
+    <div class="ctl"><span class="note">변환</span><button class="btn ghost" data-s9t="I">그대로 (I)</button><button class="btn ghost" data-s9t="sc">2배 확대</button><button class="btn ghost" data-s9t="rot">30° 회전</button><button class="btn ghost" data-s9t="sh">기울이기</button><button class="btn ghost" data-s9t="ref">좌우 반사</button><button class="btn ghost" data-s9t="flat">납작하게 (det = 0)</button></div>
+    <div class="ctl">
+      <label>a <input type="range" id="s9ta" min="-2" max="2" step="0.05" value="1"> <b id="s9tav"></b></label>
+      <label>b <input type="range" id="s9tb" min="-2" max="2" step="0.05" value="0"> <b id="s9tbv"></b></label>
+      <label>c <input type="range" id="s9tc" min="-2" max="2" step="0.05" value="0"> <b id="s9tcv"></b></label>
+      <label>d <input type="range" id="s9td" min="-2" max="2" step="0.05" value="1"> <b id="s9tdv"></b></label></div>
+    <div class="grid2"><svg id="s9t" viewBox="0 0 320 320"></svg><div class="msg" id="s9tout" style="margin-top:0"></div></div>
+  </div>
+
+  <div class="card">
+    <h3>생활 속 행렬: 교차로 교통 흐름<span class="tag">그림 10.9 · 해가 무수히 많은 연립방정식</span></h3>
+    <p class="sub">각 교차로에서 <b>들어오는 차 = 나가는 차</b>이므로 교차로마다 방정식이 하나씩 생깁니다(단위: 시간당 대수). 식은 4개지만 계수가 3이라서 x₄ 하나를 정하면 나머지가 모두 결정됩니다. x₄(C → D 도로)를 바꿔 보세요.</p>
+    <div class="grid2"><svg id="s9tr" viewBox="0 0 340 300"></svg><div>
+      <div class="fx" id="s9treq"></div>
+      <div class="ctl"><label>x₄ <input type="range" id="s9x4" min="0" max="400" step="10" value="100"> <b id="s9x4v"></b> 대</label></div>
+      <div class="eqrow scroll" id="s9trM"></div>
+      <div class="msg" id="s9trout"></div></div></div>
+  </div>
+  <div class="quiz" data-q="m9"></div>
+</section>
+
+</main>
+<footer>이산수학 10장 실습용 · 강의자료(10장 행렬과 행렬식) 예제 기반 · 생활 예시의 수치는 설명을 위해 정한 값입니다</footer>
+
+<script>
+/* ---------- utilities ---------- */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const NS='http://www.w3.org/2000/svg';
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a||1};
+class Fr{constructor(n,d=1){if(d<0){n=-n;d=-d}const g=gcd(n,d);this.n=n/g;this.d=d/g}
+  add(o){return new Fr(this.n*o.d+o.n*this.d,this.d*o.d)} sub(o){return new Fr(this.n*o.d-o.n*this.d,this.d*o.d)}
+  mul(o){return new Fr(this.n*o.n,this.d*o.d)} v(){return this.n/this.d}
+  s(){return this.d===1?String(this.n):`${this.n}/${this.d}`}}
+const fact=n=>n<=1?1:n*fact(n-1);
+const P=(n,r)=>{let p=1;for(let i=0;i<r;i++)p*=n-i;return p};
+const C=(n,r)=>r<0||r>n?0:Math.round(P(n,r)/fact(r));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const num=(id,a,b)=>{const el=$('#'+id);let v=parseInt(el.value)||a;v=clamp(v,a,b);el.value=v;return v};
+const speed=()=>+$('#speed').value;
+function sv(tag,a={},txt){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e}
+function permsOf(arr,r){const out=[];const used=Array(arr.length).fill(false);const cur=[];
+  (function go(){if(cur.length===r){out.push(cur.slice());return}for(let i=0;i<arr.length;i++)if(!used[i]){used[i]=true;cur.push(arr[i]);go();cur.pop();used[i]=false}})();return out}
+function combsOf(arr,r){const out=[];(function go(s,cur){if(cur.length===r){out.push(cur.slice());return}for(let i=s;i<arr.length;i++){cur.push(arr[i]);go(i+1,cur);cur.pop()}})(0,[]);return out}
+function segInit(id,cb){const el=$('#'+id);el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$$('button',el).forEach(x=>x.classList.toggle('on',x===b));cb(b.dataset.v)})}
+
+/* ---------- stepper ---------- */
+function Stepper(host,draw){
+  host.innerHTML=`<div class="stepbar"><button class="btn" data-a="first" title="처음">⏮ 처음</button><button class="btn" data-a="prev">◀ 이전</button><span class="cnt"></span><button class="btn pri" data-a="next">다음 ▶</button><button class="btn acc" data-a="play">▶ 자동</button><button class="btn" data-a="last" title="끝">끝 ⏭</button></div><input type="range" min="0" value="0"><div class="msg"></div>`;
+  const st={i:0,total:1,timer:null};
+  const cnt=$('.cnt',host),rng=$('input',host),msg=$('.msg',host),play=$('[data-a=play]',host);
+  function upd(){rng.max=st.total-1;rng.value=st.i;cnt.textContent=`단계 ${st.i} / ${st.total-1}`;
+    $('[data-a=prev]',host).disabled=st.i===0;$('[data-a=next]',host).disabled=st.i>=st.total-1;
+    msg.innerHTML=draw(st.i)||''}
+  function stop(){clearTimeout(st.timer);st.timer=null;play.textContent='▶ 자동'}
+  function tick(){if(st.i>=st.total-1){stop();return}st.i++;upd();st.timer=setTimeout(tick,speed())}
+  host.addEventListener('click',e=>{const a=e.target.closest('button')?.dataset.a;if(!a)return;
+    if(a==='play'){if(st.timer){stop();return}if(st.i>=st.total-1)st.i=0;play.textContent='⏸ 정지';upd();st.timer=setTimeout(tick,speed());return}
+    stop();if(a==='first')st.i=0;if(a==='prev')st.i=Math.max(0,st.i-1);if(a==='next')st.i=Math.min(st.total-1,st.i+1);if(a==='last')st.i=st.total-1;upd()});
+  rng.addEventListener('input',()=>{stop();st.i=+rng.value;upd()});
+  return {reset(total,keep){stop();st.total=Math.max(1,total);st.i=keep?Math.min(st.i,st.total-1):0;upd()},redraw:upd,stop,get i(){return st.i}};
+}
+
+
+/* ---------- matrix helpers ---------- */
+Fr.prototype.div=function(o){return new Fr(this.n*o.d,this.d*o.n)};
+Fr.prototype.neg=function(){return new Fr(-this.n,this.d)};
+Fr.prototype.z=function(){return this.n===0};
+Fr.prototype.one=function(){return this.n===1&&this.d===1};
+function toFr(x){if(x instanceof Fr)return x;if(typeof x==='number'){if(Number.isInteger(x))return new Fr(x,1);return new Fr(Math.round(x*1000),1000)}
+  const s=String(x).trim().replace(/−/g,'-');const m=s.match(/^(-?\d+)\s*\/\s*(\d+)$/);if(m&&+m[2])return new Fr(+m[1],+m[2]);const v=parseFloat(s);return isNaN(v)?new Fr(0,1):toFr(v)}
+const fmt=v=>{const s=v instanceof Fr?v.s():(Math.abs(v-Math.round(v))<1e-9?String(Math.round(v)):String(+v.toFixed(2)));return s.replace(/^-/,'−')};
+const pr=v=>{const s=fmt(v);return s[0]==='−'?`(${s})`:s};
+const isZ=v=>v instanceof Fr?v.z():Math.abs(v)<1e-9;
+const isOne=v=>v instanceof Fr?v.one():Math.abs(v-1)<1e-9;
+const mmul=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((s,v,k)=>s+v*B[k][j],0)));
+const mmulF=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((s,v,k)=>s.add(toFr(v).mul(toFr(B[k][j]))),new Fr(0,1))));
+const tr=A=>A[0].map((_,j)=>A.map(r=>r[j]));
+const cloneM=M=>M.map(r=>r.slice());
+function det(M){const n=M.length;if(n===1)return M[0][0];if(n===2)return M[0][0]*M[1][1]-M[0][1]*M[1][0];let s=0;for(let j=0;j<n;j++){const m=M.slice(1).map(r=>r.filter((_,k)=>k!==j));s+=(j%2?-1:1)*M[0][j]*det(m)}return s}
+function mat(M,o={}){const c=M[0].length;let h=`<span class="mat${o.det?' det':''}${o.cls?' '+o.cls:''}" style="grid-template-columns:repeat(${c},auto)">`;
+  M.forEach((r,i)=>r.forEach((v,j)=>{let k=o.hl?(o.hl(i,j)||''):'';if(o.aug!=null&&j===o.aug)k+=' aug';const t=o.mask&&o.mask(i,j)?'?':(typeof v==='string'?v:fmt(v));if(o.mask&&o.mask(i,j))k+=' q';h+=`<span class="${k}">${t}</span>`}));return h+'</span>'}
+function matEd(id,M){const c=M[0].length;return `<span class="mat ed" id="${id}" style="grid-template-columns:repeat(${c},auto)">`+M.map((r,i)=>r.map((v,j)=>`<input data-i="${i}" data-j="${j}" value="${String(fmt(v)).replace('−','-')}" aria-label="${i+1}행 ${j+1}열">`).join('')).join('')+'</span>'}
+function readEd(id){const ins=$$('#'+id+' input');const r=Math.max(...ins.map(x=>+x.dataset.i))+1,c=Math.max(...ins.map(x=>+x.dataset.j))+1;const M=Array.from({length:r},()=>Array(c).fill(0));ins.forEach(x=>M[+x.dataset.i][+x.dataset.j]=toFr(x.value).v());return M}
+function leads(M,cols){return M.map(r=>{for(let j=0;j<(cols??r.length);j++)if(!isZ(r[j]))return j;return -1})}
+function echelon(M,cols){const L=leads(M,cols);let ref=true,z=false,p=-1;L.forEach(l=>{if(l<0){z=true;return}if(z||l<=p)ref=false;p=l});
+  const rref=ref&&L.every((l,i)=>l<0||(isOne(M[i][l])&&M.every((r,k)=>k===i||isZ(r[l]))));return{L,ref,rref}}
+function rrefSteps(M0,o={}){let M=M0.map(r=>r.map(toFr));const rows=M.length,cols=o.ncols??M[0].length;const steps=[{M:cloneM(M),op:'시작'}];let r=0;const pivots=[];
+  for(let c=0;c<cols&&r<rows;c++){let p=-1;for(let i=r;i<rows;i++)if(!M[i][c].z()){p=i;break}if(p<0)continue;
+    if(p!==r){[M[p],M[r]]=[M[r],M[p]];steps.push({M:cloneM(M),op:`R${r+1} ↔ R${p+1}`,desc:`피벗 자리가 0이라 ${r+1}행과 ${p+1}행을 바꿉니다.`,phase:'전향',pv:[r,c]})}
+    if(!M[r][c].one()){const k=new Fr(1,1).div(M[r][c]);M[r]=M[r].map(v=>v.mul(k));steps.push({M:cloneM(M),op:`(${fmt(k)}) × R${r+1} → R${r+1}`,desc:`피벗을 1로 만들기 위해 ${r+1}행에 ${fmt(k)}를 곱합니다.`,phase:'전향',pv:[r,c]})}
+    for(let i=r+1;i<rows;i++)if(!M[i][c].z()){const k=M[i][c].neg();M[i]=M[i].map((v,j)=>v.add(M[r][j].mul(k)));steps.push({M:cloneM(M),op:`(${fmt(k)}) × R${r+1} + R${i+1} → R${i+1}`,desc:`피벗 아래의 ${i+1}행 ${c+1}열을 0으로 만듭니다.`,phase:'전향',pv:[r,c],el:[i,c]})}
+    pivots.push([r,c]);r++}
+  steps.refEnd=steps.length-1;
+  for(let q=pivots.length-1;q>=0;q--){const[pr0,pc]=pivots[q];for(let i=pr0-1;i>=0;i--)if(!M[i][pc].z()){const k=M[i][pc].neg();M[i]=M[i].map((v,j)=>v.add(M[pr0][j].mul(k)));steps.push({M:cloneM(M),op:`(${fmt(k)}) × R${pr0+1} + R${i+1} → R${i+1}`,desc:`피벗 위의 ${i+1}행 ${pc+1}열을 0으로 만듭니다.`,phase:'후향',pv:[pr0,pc],el:[i,pc]})}}
+  steps.pivots=pivots;return steps}
+function inverseF(A){const n=A.length;const aug=A.map((r,i)=>[...r.map(toFr),...Array.from({length:n},(_,j)=>new Fr(i===j?1:0,1))]);const st=rrefSteps(aug,{ncols:n});if(st.pivots.length<n)return null;return st[st.length-1].M.map(r=>r.slice(n))}
+const warn=t=>`<b style="color:var(--warn)">${t}</b>`;
+
+/* ---------- tabs ---------- */
+const LABS=[['m1','10.1','행렬과 연산'],['m2','10.2','특수한 행렬'],['m3','10.3','행 연산·사다리꼴'],['m4','10.4','행렬식'],['m5','10.5','행렬식의 성질'],['m6','10.6','역행렬'],['m7','10.7','연립방정식'],['m8','10.8','신경망'],['m9','10.9','응용과 AI']];
+$('#tabs').innerHTML=LABS.map(([id,n,t])=>`<button data-id="${id}"><b>${n}</b>${t}</button>`).join('');
+function show(id){if(!LABS.find(l=>l[0]===id))id='m1';$$('section.lab').forEach(s=>s.classList.toggle('on',s.id===id));$$('#tabs button').forEach(b=>{const on=b.dataset.id===id;b.classList.toggle('on',on);if(on)b.scrollIntoView({block:'nearest',inline:'center'})})}
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;location.hash=b.dataset.id;show(b.dataset.id);window.scrollTo({top:0})});
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+
+/* ========== 10.1 (A) grade table ========== */
+(()=>{const nm=['윤아','택연','소희'],sb=['국어','수학','영어','사회'],D=[[92,78,95,91],[80,88,82,78],[90,75,90,87]];let si=1,sj=2;
+  function draw(){let h='<tr><th>이름＼과목</th>'+sb.map((s,j)=>`<th>${s}<br><small>${j+1}열</small></th>`).join('')+'</tr>';
+    D.forEach((r,i)=>{h+=`<tr><th>${nm[i]}<br><small>${i+1}행</small></th>`+r.map((v,j)=>`<td class="${i===si&&j===sj?'cur':(i===si||j===sj?'hit':'')}" data-i="${i}" data-j="${j}" style="cursor:pointer">${v}</td>`).join('')+'</tr>'});
+    $('#s1tbl').innerHTML=h;const row=D[si],col=D.map(r=>r[sj]),rs=row.reduce((a,b)=>a+b),cs=col.reduce((a,b)=>a+b);
+    $('#s1info').innerHTML=`<b>a<sub>${si+1}${sj+1}</sub> = ${D[si][sj]}</b> : ${si+1}행(${nm[si]})과 ${sj+1}열(${sb[sj]})이 만나는 칸<br>
+      행벡터(1×4, ${nm[si]}의 성적) ${mat([row],{cls:'sm'})} → 총점 ${rs}, 평균 ${(rs/4).toFixed(2)}<br>
+      열벡터(3×1, ${sb[sj]} 점수) ${mat(col.map(v=>[v]),{cls:'sm'})} → 과목 평균 ${(cs/3).toFixed(2)}<br>
+      표 전체는 행 3개, 열 4개인 <b>3×4 행렬</b>입니다. 행과 열의 수가 같으면 정방행렬(정의 10-1)이라 부릅니다.`}
+  $('#s1tbl').addEventListener('click',e=>{const td=e.target.closest('td');if(!td)return;si=+td.dataset.i;sj=+td.dataset.j;draw()});draw()})();
+
+/* ========== 10.1 (B) add / scalar ========== */
+(()=>{const PRE={e2:{A:[[3,-1],[2,4]],B:[[2,1],[-3,2]],p:1,q:1,s:'예제 10-2: A + B'},
+  e3:{A:[[3,-1,3],[0,4,6],[2,7,-5]],B:[[0,-2,-4],[1,6,-2],[1,-1,2]],p:1,q:1,s:'예제 10-3: 3×3 행렬의 합'},
+  e4:{A:[[1,-2,3],[0,4,5]],B:[[4,6,8],[1,-3,-7]],p:2,q:-3,s:'예제 10-4: 2A − 3B (뺄셈은 −3을 곱해서 더하는 것과 같습니다)'},
+  shop:{A:[[30,25,40],[22,35,18]],B:[[28,30,45],[25,32,20]],p:1,q:1,s:'행 = 목포점·광주점, 열 = 우유·빵·김밥. A = 1월 판매량, B = 2월 판매량 → A + B = 두 달 판매량 (예시 수치)'},
+  price:{A:[[1500,2000,3000]],B:[[0,0,0]],p:1.1,q:0,s:'A = 우유·빵·김밥 가격(원). 모든 가격을 10% 올리면 스칼라 곱 1.1·A (예시 수치)'}};
+  let A,B,p,q;
+  function load(k){const P=PRE[k];$('#s1bA').innerHTML=matEd('s1bAe',P.A);$('#s1bB').innerHTML=matEd('s1bBe',P.B);$('#s1p').value=P.p;$('#s1q').value=P.q;$('#s1bstory').textContent=P.s;setup()}
+  function setup(){A=readEd('s1bAe');B=readEd('s1bBe');p=+$('#s1p').value||0;q=+$('#s1q').value||0;$('#s1bpl').textContent=fmt(p)+' ·';$('#s1bql').textContent=(q<0?'− ':'+ ')+fmt(Math.abs(q))+' ·';st.reset(A.length*A[0].length+2)}
+  function draw(i){const r=A.length,c=A[0].length,R=A.map((row,a)=>row.map((v,b)=>p*v+q*B[a][b])),n=Math.min(i,r*c),act=i>=1&&i<=r*c;
+    $('#s1bR').innerHTML=mat(R,{mask:(a,b)=>a*c+b>=n,hl:(a,b)=>act&&a*c+b===n-1?'h2':(a*c+b<n?'h3':'')});
+    $$('#s1bAe input,#s1bBe input').forEach(x=>x.classList.toggle('hl',act&&(+x.dataset.i)*c+(+x.dataset.j)===i-1));
+    if(i===0)return `같은 크기(${r}×${c})의 두 행렬이므로 계산할 수 있습니다. 결과의 각 칸 = <span class="eq">${fmt(p)}·a<sub>ij</sub> ${q<0?'−':'+'} ${fmt(Math.abs(q))}·b<sub>ij</sub></span>. [다음 ▶]을 눌러 한 칸씩 채워 보세요.`;
+    if(act){const a=Math.floor((i-1)/c),b=(i-1)%c;return `c<sub>${a+1}${b+1}</sub> = ${fmt(p)}·${pr(A[a][b])} + ${pr(q)}·${pr(B[a][b])} = <b>${fmt(R[a][b])}</b>`}
+    return `완성! 같은 자리끼리만 계산했으므로 결과도 <b>${r}×${c}</b> 행렬입니다. 덧셈은 A + B = B + A (교환 법칙, 정리 10-1)가 성립합니다.`}
+  const st=Stepper($('#s1bst'),draw);
+  $$('[data-s1b]').forEach(b=>b.onclick=()=>load(b.dataset.s1b));['s1p','s1q'].forEach(id=>$('#'+id).onchange=setup);
+  $('#s1bshow').addEventListener('change',e=>{if(e.target.matches('input'))setup()});load('e4')})();
+
+/* ========== 10.1 (C) multiply ========== */
+(()=>{const PRE={e5:{A:[[-4,2],[1,6],[0,1]],B:[[3],[-2],[7]],s:'예제 10-5: 3×2 행렬과 3×1 행렬 — 곱할 수 있을까요?'},
+  e6:{A:[[2,4,-1],[-1,3,3],[4,-2,1],[-3,0,2]],B:[[4,-2],[-2,1],[3,-1]],s:'예제 10-6: (4×3)(3×2) = 4×2. 2행이 [−1, 2]인지 확인해 보세요.'},
+  e7a:{A:[[1,2,-1],[0,-5,3]],B:[[4],[3],[7]],s:'예제 10-7 (1)'},e7b:{A:[[2,-3],[8,0],[-5,2]],B:[[4],[7]],s:'예제 10-7 (2)'},
+  shop:{A:[[2,1,3],[1,4,0]],B:[[1500,1400],[2000,2200],[3000,2800]],s:'장보기: A = 살 개수 (행: 민지·준호, 열: 우유·빵·김밥), B = 가격 (행: 우유·빵·김밥, 열: 가마트·나마트). AB = 각 사람이 각 마트에서 낼 금액 (예시 수치)'},
+  comm:{A:[[1,0],[1,0]],B:[[0,0],[1,1]],s:'여기서 잠깐: AB를 구한 뒤 [순서 바꾸기]로 BA를 구해 비교해 보세요.'}};
+  let A,B,key;const opts=n=>[1,2,3,4].map(v=>`<option${v===n?' selected':''}>${v}</option>`).join('');
+  const resize=(M,r,c)=>Array.from({length:r},(_,i)=>Array.from({length:c},(_,j)=>M[i]?.[j]??0));
+  function render(){['s1ma','s1na','s1nb','s1pb'].forEach((id,k)=>$('#'+id).innerHTML=opts([A.length,A[0].length,B.length,B[0].length][k]));$('#s1cA').innerHTML=matEd('s1cAe',A);$('#s1cB').innerHTML=matEd('s1cBe',B);setup()}
+  function load(k){key=k;A=cloneM(PRE[k].A);B=cloneM(PRE[k].B);$('#s1cstory').textContent=PRE[k].s;render()}
+  function setup(){A=readEd('s1cAe');B=readEd('s1cBe');const m=A.length,n=A[0].length,n2=B.length,p=B[0].length;
+    $('#s1size').innerHTML=`A: ${m} × <b>${n}</b> , B: <b>${n2}</b> × ${p} → 내측 ${n} ${n===n2?`= ${n2} ✓ 곱할 수 있음 → 결과 크기(외측) <b>${m} × ${p}</b>`:`≠ ${n2} ✗ 곱할 수 없음`}`;
+    st.reset(n===n2?m*p+2:1)}
+  const clr=()=>$$('#s1cAe input,#s1cBe input').forEach(x=>x.classList.remove('hl'));
+  function draw(i){const m=A.length,n=A[0].length,n2=B.length,p=B[0].length;
+    if(n!==n2){$('#s1cR').innerHTML='<span class="note">정의되지 않음</span>';clr();return `A의 열 수(${n})와 B의 행 수(${n2})가 달라 행과 열의 짝이 맞지 않습니다. 이 곱은 <b>정의되지 않습니다</b>.${key==='e5'?' (예제 10-5의 답)':''}`}
+    const C=mmul(A,B),k=Math.min(i,m*p),ci=Math.floor((i-1)/p),cj=(i-1)%p,act=i>=1&&i<=m*p;
+    $('#s1cR').innerHTML=mat(C,{mask:(a,b)=>a*p+b>=k,hl:(a,b)=>act&&a===ci&&b===cj?'h2':(a*p+b<k?'h3':'')});
+    $$('#s1cAe input').forEach(x=>x.classList.toggle('hl',act&&+x.dataset.i===ci));$$('#s1cBe input').forEach(x=>x.classList.toggle('hl',act&&+x.dataset.j===cj));
+    if(i===0)return '결과 C의 (i, j) 칸 = A의 <b>i행</b> · B의 <b>j열</b>. [다음 ▶]을 누르면 짝지어지는 행과 열이 노란색으로 표시됩니다.';
+    if(act){const terms=A[ci].map((v,t)=>`${pr(v)}·${pr(B[t][cj])}`).join(' + ');return `c<sub>${ci+1}${cj+1}</sub> = (A의 ${ci+1}행)·(B의 ${cj+1}열) = ${terms} = <b>${fmt(C[ci][cj])}</b>`}
+    let ex='';if(key==='shop')ex='<br>'+C.map((r,a)=>`${['민지','준호'][a]}: 가마트 ${r[0].toLocaleString()}원, 나마트 ${r[1].toLocaleString()}원 → <b>${r[0]<=r[1]?'가마트':'나마트'}</b>가 더 저렴`).join('<br>');
+    if(key==='comm')ex='<br>이제 [순서 바꾸기 (A ↔ B)]를 눌러 BA를 계산해 보세요. 결과가 다르면 AB ≠ BA — 행렬 곱셈은 교환 법칙이 성립하지 않습니다.';
+    return `완성! ${m}×${n} 행렬과 ${n}×${p} 행렬의 곱은 <b>${m}×${p}</b> 행렬입니다.${ex}`}
+  const st=Stepper($('#s1cst'),draw);
+  $$('[data-s1c]').forEach(b=>b.onclick=()=>load(b.dataset.s1c));
+  ['s1ma','s1na','s1nb','s1pb'].forEach(id=>$('#'+id).onchange=()=>{A=resize(readEd('s1cAe'),+$('#s1ma').value,+$('#s1na').value);B=resize(readEd('s1cBe'),+$('#s1nb').value,+$('#s1pb').value);key='';$('#s1cstory').textContent='크기를 바꿨습니다. 빈칸(0)에 숫자를 넣어 보세요.';render()});
+  $('#s1swap').onclick=()=>{const a=readEd('s1cAe');A=readEd('s1cBe');B=a;$('#s1cstory').textContent=key==='comm'?'순서를 바꿨습니다. 아까 구한 AB = [0 0; 0 0]과 비교해 보세요.':'A와 B의 순서를 바꿨습니다.';render()};
+  $('#s1cshow').addEventListener('change',e=>{if(e.target.matches('input'))setup()});load('e6')})();
+
+/* ========== 10.2 (A) special matrices ========== */
+(()=>{const PRE={diag:[[4,0,0],[0,-3,0],[0,0,2]],I:[[1,0,0],[0,1,0],[0,0,1]],O:[[0,0,0],[0,0,0],[0,0,0]],sym:[[2,4,0],[4,1,6],[0,6,3]],skew:[[0,4,0],[-4,0,-6],[0,6,0]],up:[[7,1,-1],[0,2,1],[0,0,3]],low:[[7,0,0],[1,-4,0],[-1,1,-5]],gen:[[8,1,6],[3,5,7],[4,9,2]]};
+  let fi=-1,fj=-1;
+  function load(M){$('#s2n').value=M.length;$('#s2A').innerHTML=matEd('s2Ae',M);upd()}
+  function upd(){const A=readEd('s2Ae');const all=f=>A.every((r,i)=>r.every((v,j)=>f(v,i,j)));
+    const ck=[['정방행렬',true,'행 수 = 열 수'],['대각행렬',all((v,i,j)=>i===j||v===0),'대각선 밖이 모두 0'],['항등행렬 I',all((v,i,j)=>v===(i===j?1:0)),'대각선 1, 나머지 0'],['영행렬 O',all(v=>v===0),'모든 성분이 0'],['대칭행렬',all((v,i,j)=>v===A[j][i]),'A = Aᵀ'],['교대행렬',all((v,i,j)=>v===-A[j][i]),'A = −Aᵀ'],['상부삼각행렬',all((v,i,j)=>i<=j||v===0),'대각선 아래가 모두 0'],['하부삼각행렬',all((v,i,j)=>i>=j||v===0),'대각선 위가 모두 0']];
+    $('#s2badges').innerHTML=ck.map(([t,ok,r])=>`<span class="badge ${ok?'ok':''}" title="${r}">${ok?'✓':'✗'} ${t}</span>`).join('');
+    $('#s2T').innerHTML='<span class="lbl">Aᵀ =</span>'+mat(tr(A),{hl:(i,j)=>fi>=0&&i===fj&&j===fi?'h2':(i===j?'h':'')});
+    $$('#s2Ae input').forEach(x=>{const i=+x.dataset.i,j=+x.dataset.j;x.classList.toggle('hl',fi>=0&&((i===fi&&j===fj)||(i===fj&&j===fi)))});
+    const trace=A.reduce((s,r,i)=>s+r[i],0);
+    let t=`대각합 tr(A) = ${A.map((r,i)=>pr(r[i])).join(' + ')} = <b>${fmt(trace)}</b> (정의 10-6)<br>`;
+    if(fi>=0&&fi<A.length&&fj<A.length)t+=`선택한 칸 a<sub>${fi+1}${fj+1}</sub> = ${fmt(A[fi][fj])}, 마주 보는 칸 a<sub>${fj+1}${fi+1}</sub> = ${fmt(A[fj][fi])} → ${fi===fj?'대각선 위의 칸':A[fi][fj]===A[fj][fi]?'같음 (대칭 조건 ✓)':A[fi][fj]===-A[fj][fi]?'부호만 반대 (교대 조건 ✓)':'다름'}<br>`;
+    t+='<span class="note">배지에 마우스를 올리면 조건이 보입니다. 대칭행렬이면 Aᵀ가 A와 똑같습니다.</span>';$('#s2out').innerHTML=t}
+  $('#s2A').addEventListener('input',upd);$('#s2A').addEventListener('focusin',e=>{if(e.target.dataset.i==null)return;fi=+e.target.dataset.i;fj=+e.target.dataset.j;upd()});
+  $('#s2n').onchange=()=>{const n=+$('#s2n').value;fi=fj=-1;load(Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:0)))};
+  $$('[data-s2]').forEach(b=>b.onclick=()=>{fi=fj=-1;load(cloneM(PRE[b.dataset.s2]))});load(PRE.sym)})();
+
+/* ========== 10.2 (B) pixel photo ========== */
+(()=>{const N=8,F0=['01111100','01000000','01000000','01111000','01000000','01000000','01000000','00000000'].map(r=>[...r].map(Number));let G=cloneM(F0),last='처음 그림 (글자 F)';
+  const box=$('#s2pix');let paint=null;
+  function draw(){box.innerHTML=G.map((r,i)=>r.map((v,j)=>`<div class="${v?'on':''}${i===j?' dg':''}" data-i="${i}" data-j="${j}"></div>`).join('')).join('');
+    $('#s2pm').innerHTML=mat(G,{hl:(i,j)=>G[i][j]?'h':'zr',cls:'sm'});
+    $('#s2pmsg').innerHTML=`방금 한 일: <b>${last}</b><br>점선 칸은 주대각선입니다. 전치하면 a<sub>ij</sub>와 a<sub>ji</sub>가 자리를 바꾸므로 대각선 위의 칸은 그대로 있습니다.`}
+  const ops={t:['전치 Aᵀ (주대각선을 거울 삼아 뒤집기)',g=>tr(g)],h:['좌우 반전',g=>g.map(r=>r.slice().reverse())],v:['상하 반전',g=>g.slice().reverse()],r:['시계 방향 90° 회전 = 전치한 뒤 좌우 반전',g=>tr(g).map(r=>r.slice().reverse())],z:['처음 그림 (글자 F)',()=>cloneM(F0)],c:['모두 지우기',g=>g.map(r=>r.map(()=>0))]};
+  $$('[data-s2p]').forEach(b=>b.onclick=()=>{const[t,f]=ops[b.dataset.s2p];G=f(G);last=t;draw()});
+  const at=e=>document.elementFromPoint(e.clientX,e.clientY)?.closest('#s2pix [data-i]');
+  box.addEventListener('pointerdown',e=>{const d=e.target.closest('[data-i]');if(!d)return;e.preventDefault();const i=+d.dataset.i,j=+d.dataset.j;paint=G[i][j]?0:1;G[i][j]=paint;last='그림 그리기';draw()});
+  box.addEventListener('pointermove',e=>{if(paint==null)return;const el=at(e);if(!el)return;const i=+el.dataset.i,j=+el.dataset.j;if(G[i][j]!==paint){G[i][j]=paint;draw()}});
+  window.addEventListener('pointerup',()=>paint=null);draw()})();
+
+/* ========== 10.3 (A) manual row ops ========== */
+const PRE3={e13:[[1,1,0,0],[2,2,1,0],[-3,-3,1,1]],e10:[[1,0,0],[0,1,0],[0,0,1]],e17:[[1,2,3],[2,3,5],[3,-3,7]],sys:[[1,2,3,1],[1,3,6,3],[2,6,13,5]],rk:[[1,2,3],[2,4,6],[1,1,1]]};
+const LBL3={e13:'예제 10-13의 행렬',e10:'예제 10-10: 3×3 항등행렬',e17:'예제 10-17의 행렬',sys:'예제 10-20의 첨가행렬 [A | b]',rk:'두 번째 행이 첫 번째 행의 2배인 행렬'};
+let getS3M=()=>PRE3.e13;
+(()=>{let M,ops,start;
+  function apply(o){if(o.t==='1')[M[o.i],M[o.j]]=[M[o.j],M[o.i]];else if(o.t==='2')M[o.i]=M[o.i].map(v=>v.mul(o.k));else M[o.j]=M[o.j].map((v,c)=>v.add(M[o.i][c].mul(o.k)))}
+  function load(k){start=PRE3[k].map(r=>r.map(toFr));M=cloneM(start);ops=[];const o=M.map((_,i)=>`<option value="${i}">R${i+1}</option>`).join('');$('#s3i').innerHTML=o;$('#s3j').innerHTML=o;$('#s3j').value='1';sync();draw()}
+  function sync(){const t=$('#s3type').value,i=+$('#s3i').value,j=+$('#s3j').value,k=fmt(toFr($('#s3k').value||'0'));$('#s3kl').hidden=t==='1';$('#s3jl').hidden=t==='2';
+    $('#s3opfx').textContent=t==='1'?`R${i+1} ↔ R${j+1}   (${i+1}행과 ${j+1}행을 바꾼다)`:t==='2'?`(${k}) × R${i+1} → R${i+1}   (${i+1}행에 ${k}를 곱한다)`:`(${k}) × R${i+1} + R${j+1} → R${j+1}   (${i+1}행에 ${k}를 곱해 ${j+1}행에 더한다)`}
+  function draw(){const E=echelon(M),rank=rrefSteps(M).pivots.length;
+    $('#s3M').innerHTML=mat(M,{hl:(i,j)=>E.L[i]===j?'pv':(isZ(M[i][j])?'zr':'')});
+    $('#s3stat').innerHTML=`<div class="badges"><span class="badge ${E.ref?'ok':''}">${E.ref?'✓':'✗'} 행 사다리꼴 (REF)</span><span class="badge ${E.rref?'ok':''}">${E.rref?'✓':'✗'} 기약 행 사다리꼴 (RREF)</span><span class="badge ok">계수 rank = ${rank}</span></div><div class="note">${E.ref?(E.rref?'완성! 피벗은 모두 1이고, 피벗이 있는 열의 나머지 칸은 모두 0입니다.':'피벗 아래는 모두 0입니다(REF). 피벗을 1로 만들고 피벗 위도 0으로 만들면 RREF가 됩니다.'):'피벗 아래에 0이 아닌 수가 남아 있습니다. Type Ⅲ 연산으로 지워 보세요.'}</div>`;
+    $('#s3log').innerHTML=ops.length?'적용한 연산: '+ops.map((o,n)=>`${n+1}. <span class="eq">${o.txt}</span>`).join(' '):'아직 적용한 연산이 없습니다. 예제 10-13은 <span class="eq">(−2) × R1 + R2 → R2</span>부터 시작합니다 (지금 선택된 연산).';getS3M=()=>M}
+  $('#s3go').onclick=()=>{const t=$('#s3type').value,i=+$('#s3i').value,j=+$('#s3j').value,k=toFr($('#s3k').value||'0');
+    if(t!=='2'&&i===j){$('#s3log').innerHTML=warn('서로 다른 두 행을 골라 주세요.');return}
+    if(t==='2'&&k.z()){$('#s3log').innerHTML=warn('Type Ⅱ에서는 0을 곱할 수 없습니다. 행이 모두 0이 되어 정보가 사라지기 때문입니다.');return}
+    const o={t,i,j,k,txt:$('#s3opfx').textContent.split('   ')[0]};apply(o);ops.push(o);draw()};
+  $('#s3undo').onclick=()=>{if(!ops.length)return;ops.pop();M=cloneM(start);ops.forEach(apply);draw()};
+  $('#s3reset').onclick=()=>{M=cloneM(start);ops=[];draw()};
+  ['s3type','s3i','s3j'].forEach(id=>$('#'+id).onchange=sync);$('#s3k').oninput=sync;
+  $$('[data-s3]').forEach(b=>b.onclick=()=>load(b.dataset.s3));load('e13')})();
+
+/* ========== 10.3 (B) Gauss-Jordan auto ========== */
+(()=>{let steps;
+  function load(M,label){steps=rrefSteps(M);$('#s3blabel').textContent=label;st.reset(steps.length+1)}
+  function draw(i){const L=steps.length,s=steps[Math.min(i,L-1)],E=echelon(s.M);
+    $('#s3bM').innerHTML=mat(s.M,{hl:(r,c)=>s.el&&s.el[0]===r&&s.el[1]===c?'el':(E.L[r]===c?'pv':(isZ(s.M[r][c])?'zr':''))});
+    if(i===0)return '처음 행렬입니다. 왼쪽 열부터 피벗(○)을 정하고 그 아래를 0으로 만들어 갑니다.';
+    if(i<L){let t=`<span class="eq">${s.op}</span> ${s.desc} <span class="note">[${s.phase}단계]</span>`;if(i===steps.refEnd)t+='<br>📍 여기까지가 <b>가우스 소거법</b> — 행 사다리꼴(REF) 완성. 이제 후향단계로 피벗 위를 지웁니다.';return t}
+    const rk=steps.pivots.length;return `<b>기약 행 사다리꼴(RREF) 완성</b> — 가우스–조단 소거법 끝. 0이 아닌 행이 ${rk}개이므로 <b>계수(rank) = ${rk}</b>.`}
+  const st=Stepper($('#s3bst'),draw);
+  $$('[data-s3b]').forEach(b=>b.onclick=()=>load(PRE3[b.dataset.s3b],LBL3[b.dataset.s3b]));
+  $('#s3bfrom').onclick=()=>load(cloneM(getS3M()),'위 카드에서 가져온 행렬');load(PRE3.e13,LBL3.e13)})();
+
+/* ========== 10.3 (C) friend graph ========== */
+(()=>{const NM=['민수','지영','현우','서연','도윤'],P=[[60,50],[240,50],[240,200],[60,200],[305,125]];
+  const A=Array.from({length:5},()=>Array(5).fill(0));[[0,1],[0,3],[1,2],[1,3],[2,3],[2,4]].forEach(([i,j])=>A[i][j]=A[j][i]=1);
+  function tog(i,j){if(i===j)return;A[i][j]=A[j][i]=1-A[i][j];draw()}
+  function draw(){const svg=$('#s3g');svg.innerHTML='';
+    for(let i=0;i<5;i++)for(let j=i+1;j<5;j++){const on=A[i][j];svg.appendChild(sv('line',{x1:P[i][0],y1:P[i][1],x2:P[j][0],y2:P[j][1],stroke:on?'#1597c9':'#d5dee6','stroke-width':on?3.5:1.5,'stroke-dasharray':on?'':'4 5'}));
+      const h=sv('line',{x1:P[i][0],y1:P[i][1],x2:P[j][0],y2:P[j][1],stroke:'transparent','stroke-width':16,style:'cursor:pointer'});h.addEventListener('click',()=>tog(i,j));svg.appendChild(h)}
+    P.forEach(([x,y],i)=>{svg.appendChild(sv('circle',{cx:x,cy:y,r:17,fill:'#e3f4fb',stroke:'#1597c9','stroke-width':2}));svg.appendChild(sv('text',{x,y:y+5,'text-anchor':'middle','font-size':14,'font-weight':700,fill:'#1d2733'},i+1));svg.appendChild(sv('text',{x,y:y>150?y+36:y-24,'text-anchor':'middle','font-size':12.5,fill:'#5d6b7a'},NM[i]))});
+    const A2=mmul(A,A),head='<tr><th></th>'+NM.map((n,j)=>`<th>${j+1}</th>`).join('')+'</tr>';
+    $('#s3adj').innerHTML=`<table class="t">${head}${A.map((r,i)=>`<tr><th>${i+1} ${NM[i]}</th>${r.map((v,j)=>`<td class="${i===j?'dim':v?'hit':''}" data-i="${i}" data-j="${j}" style="cursor:${i===j?'default':'pointer'}">${v}</td>`).join('')}</tr>`).join('')}</table>`;
+    $('#s3a2').innerHTML=`<table class="t">${head}${A2.map((r,i)=>`<tr><th>${i+1} ${NM[i]}</th>${r.map((v,j)=>`<td class="${i===j?'dim':(!A[i][j]&&v>0?'cur':'')}">${v}</td>`).join('')}</tr>`).join('')}</table>`;
+    const rec=[];for(let i=0;i<5;i++)for(let j=i+1;j<5;j++)if(!A[i][j]&&A2[i][j]>0)rec.push([A2[i][j],i,j]);rec.sort((a,b)=>b[0]-a[0]);
+    $('#s3rec').innerHTML=`A²의 대각선 값 = 각자의 친구 수: ${NM.map((n,i)=>`${n} ${A2[i][i]}`).join(', ')}<br>`+(rec.length?'<b>친구 추천</b> (아직 친구가 아니지만 공통 친구가 있는 사이): '+rec.map(([c,i,j])=>`${NM[i]}–${NM[j]} (공통 친구 ${c}명: ${NM.filter((_,k)=>A[i][k]&&A[j][k]).join(', ')})`).join(' · '):'추천할 사람이 없습니다. 선을 몇 개 더 이어 보세요.')+'<br><span class="note">인접 행렬은 항상 대칭행렬입니다(10.2). 최단 경로·통신 네트워크도 이 행렬로 계산합니다.</span>'}
+  $('#s3adj').addEventListener('click',e=>{const td=e.target.closest('td[data-i]');if(td)tog(+td.dataset.i,+td.dataset.j)});draw()})();
+
+/* ========== 10.4 (A) det = area ========== */
+(()=>{const ids=['s4a','s4b','s4c','s4d'],PRE={e14a:[2,1,1,4],e14b:[-2,-3,4,5],sing:[1,2,2,4],I:[1,0,0,1]};
+  function draw(){const v=ids.map(id=>+$('#'+id).value),[a,b,c,d]=v;ids.forEach((id,k)=>$('#'+id+'v').textContent=fmt(v[k]));
+    const D=a*d-b*c,svg=$('#s4svg');svg.innerHTML='';const S=24,O=160,X=x=>O+x*S,Y=y=>O-y*S;
+    for(let k=-6;k<=6;k++){svg.appendChild(sv('line',{x1:X(k),y1:0,x2:X(k),y2:320,stroke:k===0?'#9aa6b2':'#eef2f6'}));svg.appendChild(sv('line',{x1:0,y1:Y(k),x2:320,y2:Y(k),stroke:k===0?'#9aa6b2':'#eef2f6'}))}
+    svg.appendChild(sv('polygon',{points:[[0,0],[1,0],[1,1],[0,1]].map(([x,y])=>X(x)+','+Y(y)).join(' '),fill:'none',stroke:'#9aa6b2','stroke-dasharray':'3 3'}));
+    const zero=Math.abs(D)<1e-9;svg.appendChild(sv('polygon',{points:[[0,0],[a,c],[a+b,c+d],[b,d]].map(([x,y])=>X(x)+','+Y(y)).join(' '),fill:zero?'none':(D>0?'rgba(21,151,201,.22)':'rgba(226,87,76,.2)'),stroke:zero?'#e2574c':'none','stroke-width':2}));
+    const arrow=(x,y,col,lab)=>{svg.appendChild(sv('line',{x1:X(0),y1:Y(0),x2:X(x),y2:Y(y),stroke:col,'stroke-width':3.5,'stroke-linecap':'round'}));svg.appendChild(sv('circle',{cx:X(x),cy:Y(y),r:5,fill:col}));svg.appendChild(sv('text',{x:X(x)+7,y:Y(y)-7,'font-size':12,'font-weight':700,fill:col},lab))};
+    arrow(a,c,'#1597c9',`(${fmt(a)}, ${fmt(c)})`);arrow(b,d,'#d98200',`(${fmt(b)}, ${fmt(d)})`);
+    $('#s4M').innerHTML=`<span class="lbl">A =</span>${mat([[a,b],[c,d]],{hl:(i,j)=>j===0?'h':'g'})}`;
+    $('#s4out').innerHTML=`Det(A) = ad − bc = ${pr(a)}·${pr(d)} − ${pr(b)}·${pr(c)} = <span class="big">${fmt(D)}</span><br>평행사변형 넓이 = |Det(A)| = <b>${fmt(Math.abs(D))}</b> (점선 정사각형 넓이 1의 ${fmt(Math.abs(D))}배)<br>`+(zero?warn('Det = 0 → 두 벡터가 한 직선 위에 놓여 넓이가 0입니다. 특이행렬(역행렬 없음).'):`Det ${D>0?'&gt; 0: 방향이 그대로':'&lt; 0: 거울처럼 방향이 뒤집힘 (빨간색)'} → <b>정칙행렬</b> (역행렬 있음)`)}
+  ids.forEach(id=>$('#'+id).oninput=draw);$$('[data-s4]').forEach(b=>b.onclick=()=>{PRE[b.dataset.s4].forEach((v,k)=>$('#'+ids[k]).value=v);draw()});draw()})();
+
+/* ========== 10.4 (B) Sarrus ========== */
+(()=>{const PRE={e15:[[1,2,3],[2,1,3],[3,1,2]],same:[[4,5,-1],[3,3,3],[3,3,3]],diag:[[2,0,0],[0,3,0],[0,0,4]]};
+  const PL=[[[0,0],[1,1],[2,2]],[[0,1],[1,2],[2,3]],[[0,2],[1,3],[2,4]]],MI=[[[0,2],[1,1],[2,0]],[[0,3],[1,2],[2,1]],[[0,4],[1,3],[2,2]]];let A;
+  function load(M){$('#s4bEd').innerHTML='<span class="lbl">A =</span>'+matEd('s4bE',M);setup()}
+  function setup(){A=readEd('s4bE');st.reset(8)}
+  function draw(i){const X=A.map(r=>[...r,r[0],r[1]]),plus=i>=1&&i<=3,dg=plus?PL[i-1]:(i>=4&&i<=6?MI[i-4]:null);
+    $('#s4bX').innerHTML=mat(X,{hl:(r,c)=>dg&&dg.some(([p,q])=>p===r&&q===c)?(plus?'h':'neg'):(c>=3?'cp':'')});
+    const prod=d=>d.reduce((s,[r,c])=>s*X[r][c],1),txt=d=>d.map(([r,c])=>pr(X[r][c])).join('·'),Pv=PL.map(prod),Mv=MI.map(prod),D=Pv[0]+Pv[1]+Pv[2]-Mv[0]-Mv[1]-Mv[2];
+    const run=k=>{let s=0;for(let t=0;t<Math.min(k,3);t++)s+=Pv[t];for(let t=3;t<Math.min(k,6);t++)s-=Mv[t-3];return s};
+    if(i===0)return '오른쪽은 1열·2열을 한 번 더 붙인 모습입니다. ↘ 방향(파랑) 세 줄은 <b>+</b>, ↙ 방향(빨강) 세 줄은 <b>−</b>. [다음 ▶]을 누르세요.';
+    if(dg){const v=plus?Pv[i-1]:Mv[i-4];return `${plus?'+':'−'} (${txt(dg)}) = ${plus?'+':'−'} ${pr(v)} &nbsp;→ 지금까지 합: <b>${fmt(run(i))}</b>`}
+    return `|A| = (${Pv.map(pr).join(' + ')}) − (${Mv.map(pr).join(' + ')}) = <span class="big">${fmt(D)}</span> → ${D===0?warn('특이행렬 (|A| = 0, 역행렬 없음)'):'<b>정칙행렬</b> (|A| ≠ 0, 역행렬 있음)'}`}
+  const st=Stepper($('#s4bst'),draw);$('#s4bEd').addEventListener('change',setup);$$('[data-s4b]').forEach(b=>b.onclick=()=>load(PRE[b.dataset.s4b]));load(PRE.e15)})();
+
+/* ========== 10.5 (A) property lab ========== */
+(()=>{let B=[[1,2,0],[0,1,-1],[1,0,1]];
+  function run(){const A=readEd('s5Ae'),op=$('#s5op').value,k=+$('#s5k').value||0,dA=det(A),cp=cloneM(A);let R,lbl,expect,why,rows=[];
+    switch(op){case 'swap':R=[cp[1],cp[0],cp[2]];lbl='R1 ↔ R2';expect=-dA;why='두 행을 바꾸면 행렬식의 <b>부호만</b> 바뀝니다 (정리 10-4).';rows=[0,1];break;
+      case 'same':R=[cp[0],cp[1],cp[1].slice()];lbl='R3 := R2';expect=0;why='두 행이 같으면 행렬식은 <b>0</b>입니다 (정리 10-3).';rows=[1,2];break;
+      case 'trans':R=tr(A);lbl='Aᵀ';expect=dA;why='전치해도 행렬식은 <b>같습니다</b> (정리 10-5).';break;
+      case 'mulk':R=[cp[0].map(v=>v*k),cp[1],cp[2]];lbl=`${fmt(k)}×R1`;expect=k*dA;why=`한 행에 ${fmt(k)}를 곱하면 행렬식도 <b>${fmt(k)}배</b>가 됩니다 (정리 10-7).`;rows=[0];break;
+      case 'zero':R=[[0,0,0],cp[1],cp[2]];lbl='R1 = 0';expect=0;why='한 행이 모두 0이면 행렬식은 <b>0</b>입니다 (정리 10-8).';rows=[0];break;
+      case 'addk':R=[cp[0],cp[1].map((v,j)=>v+k*cp[0][j]),cp[2]];lbl=`${fmt(k)}×R1+R2→R2`;expect=dA;why='한 행의 k배를 다른 행에 더해도 행렬식은 <b>그대로</b>입니다 (정리 10-9 ③). 그래서 소거법으로 행렬식을 쉽게 구할 수 있습니다.';rows=[1];break;
+      case 'prod':R=mmul(A,B);lbl='AB';expect=dA*det(B);why=`Det(AB) = Det(A)·Det(B) = ${pr(dA)}·${pr(det(B))} = ${fmt(expect)} (정리 10-6)`;break}
+    const dR=det(R);
+    $('#s5show').innerHTML=(op==='prod'?`<span class="lbl">B =</span>${mat(B,{det:true})}<span class="op">→</span>`:'')+`<span class="lbl">${lbl} =</span>${mat(R,{det:true,hl:i=>rows.includes(i)?'g':''})}`;
+    $('#s5out').innerHTML=`|A| = <b>${fmt(dA)}</b> &nbsp;→&nbsp; |${lbl}| = <b>${fmt(dR)}</b> ${Math.abs(dR-expect)<1e-9?'✓':'✗'}<br>${why}`}
+  function setA(M){$('#s5A').innerHTML='<span class="lbl">A =</span>'+matEd('s5Ae',M);run()}
+  ['s5op','s5k'].forEach(id=>$('#'+id).onchange=run);$('#s5A').addEventListener('change',run);
+  $('#s5newB').onclick=()=>{B=Array.from({length:3},()=>Array.from({length:3},()=>Math.floor(Math.random()*7)-3));$('#s5op').value='prod';run()};
+  $$('[data-s5]').forEach(b=>b.onclick=()=>setA(JSON.parse(b.dataset.s5)));setA([[1,2,3],[2,3,5],[3,-3,7]])})();
+
+/* ========== 10.5 (B) det by elimination ========== */
+(()=>{const PRE={e17:[[1,2,3],[2,3,5],[3,-3,7]],e15:[[1,2,3],[2,1,3],[3,1,2]],sw:[[0,2,1],[1,1,1],[2,1,3]],e16:[[2,0,0],[0,3,0],[0,0,4]]};let steps,cur;
+  function load(k){cur=k;const W=PRE[k].map(r=>r.map(toFr)),n=W.length;steps=[{M:cloneM(W),sign:1}];let sign=1;
+    for(let c=0;c<n;c++){let p=-1;for(let i=c;i<n;i++)if(!W[i][c].z()){p=i;break}if(p<0)break;
+      if(p!==c){[W[p],W[c]]=[W[c],W[p]];sign=-sign;steps.push({M:cloneM(W),op:`R${c+1} ↔ R${p+1}`,desc:'피벗 자리가 0이라 행을 바꿉니다. 행을 바꾸면 행렬식의 <b>부호가 바뀝니다</b> (정리 10-9 ②) → 앞에 − 가 붙습니다.',sign,pv:[c,c]})}
+      for(let i=c+1;i<n;i++)if(!W[i][c].z()){const k2=W[i][c].div(W[c][c]).neg();W[i]=W[i].map((v,j)=>v.add(W[c][j].mul(k2)));steps.push({M:cloneM(W),op:`(${fmt(k2)}) × R${c+1} + R${i+1} → R${i+1}`,desc:'다른 행의 k배를 더해도 행렬식은 <b>변하지 않습니다</b> (정리 10-9 ③).',sign,pv:[c,c],el:[i,c]})}}
+    steps.sign=sign;st.reset(steps.length+1)}
+  function draw(i){const L=steps.length,s=steps[Math.min(i,L-1)];
+    $('#s5bM').innerHTML=`<span class="lbl">Det(A) = ${s.sign<0?'−':''}</span>`+mat(s.M,{det:true,hl:(r,c)=>s.el&&s.el[0]===r&&s.el[1]===c?'el':(s.pv&&s.pv[0]===r&&s.pv[1]===c?'pv':(i===L&&r===c?'g':''))});
+    if(i===0)return '행 연산으로 <b>상부삼각행렬</b>(대각선 아래가 모두 0)을 만들면, 행렬식 = 대각선 성분의 곱입니다.';
+    if(i<L)return `<span class="eq">${s.op}</span> ${s.desc}`;
+    const dg=s.M.map((r,k)=>r[k]);let pd=dg.reduce((a,b)=>a.mul(b),new Fr(1,1));if(steps.sign<0)pd=pd.neg();
+    return `상부삼각행렬 완성 → Det(A) = ${steps.sign<0?'−':''}${dg.map(pr).join(' × ')} = <span class="big">${fmt(pd)}</span><br><span class="note">확인: 일반 공식으로 계산한 값 ${fmt(det(PRE[cur]))}</span>`}
+  const st=Stepper($('#s5bst'),draw);$$('[data-s5b]').forEach(b=>b.onclick=()=>load(b.dataset.s5b));load('e17')})();
+
+/* ========== 10.6 (A) inverse by Gauss-Jordan ========== */
+(()=>{const PRE={e19:[[3,4],[2,3]],e18:[[2,5],[1,3]],e20:[[1,2,3],[1,3,6],[2,6,13]],sing:[[1,2],[2,4]]};let steps,n,A;
+  function load(M){$('#s6n').value=M.length;$('#s6Ed').innerHTML='<span class="lbl">A =</span>'+matEd('s6E',M);setup()}
+  function setup(){A=readEd('s6E');n=A.length;steps=rrefSteps(A.map((r,i)=>[...r,...Array.from({length:n},(_,j)=>i===j?1:0)]),{ncols:n});st.reset(steps.length+1)}
+  function draw(i){const L=steps.length,s=steps[Math.min(i,L-1)],E=echelon(s.M,n);
+    $('#s6M').innerHTML='<span class="lbl">[A | I] →</span>'+mat(s.M,{aug:n,hl:(r,c)=>s.el&&s.el[0]===r&&s.el[1]===c?'el':(c<n&&E.L[r]===c?'pv':(c>=n?'g':''))});
+    if(i===0)return '단계 1: A 옆에 항등행렬 I를 붙여 첨가행렬 <b>[A | I]</b>를 만듭니다. 왼쪽 A를 I로 바꾸는 행 연산을 오른쪽에도 똑같이 합니다.';
+    if(i<L)return `<span class="eq">${s.op}</span> ${s.desc}`;
+    if(steps.pivots.length<n)return warn('왼쪽에 0으로만 된 행이 생겨 I로 만들 수 없습니다.')+` → A는 비가역(특이)행렬이라 역행렬이 없습니다. (|A| = ${fmt(det(A))})`;
+    const inv=s.M.map(r=>r.slice(n));return `왼쪽이 I가 되었으므로 오른쪽이 역행렬입니다. <span class="lbl">A⁻¹ =</span>${mat(inv)}<br>확인: <span class="lbl">A·A⁻¹ =</span>${mat(mmulF(A,inv))} = I ✓`}
+  const st=Stepper($('#s6st'),draw);$('#s6Ed').addEventListener('change',setup);$$('[data-s6]').forEach(b=>b.onclick=()=>load(PRE[b.dataset.s6]));
+  $('#s6n').onchange=()=>load(+$('#s6n').value===3?PRE.e20:PRE.e19);load(PRE.e19)})();
+
+/* ========== 10.6 (B) matrix cipher ========== */
+(()=>{const KEYS={a:[[3,4],[2,3]],b:[[2,5],[1,3]],c:[[1,2],[2,4]]};
+  const L2N=ch=>{const c=ch.charCodeAt(0);return c>=65&&c<=90?c-64:0},N2L=v=>v>=1&&v<=26?String.fromCharCode(64+v):(v===0?'␣':'?');
+  let K,nums,Mm,E,txt,pad;
+  function setup(){txt=($('#s6msg').value||'').toUpperCase().replace(/[^A-Z ]/g,'');if(!txt.trim())txt='HELLO';$('#s6msg').value=txt;nums=[...txt].map(L2N);pad=nums.length%2===1;if(pad)nums.push(0);
+    K=KEYS[$('#s6key').value];const k=nums.length/2;Mm=[[...Array(k)].map((_,j)=>nums[2*j]),[...Array(k)].map((_,j)=>nums[2*j+1])];E=mmul(K,Mm);st.reset(7)}
+  function draw(i){const dK=det(K),Ki=dK!==0?inverseF(K):null,box=$('#s6c');
+    if(i===0){box.innerHTML=`<div class="chips">${[...txt].map((c,j)=>`<span class="chip">${c===' '?'␣':c} → ${nums[j]}</span>`).join('')}${pad?'<span class="chip">(짝 맞춤) → 0</span>':''}</div>`;return `보낼 말 “<b>${txt}</b>”의 글자를 숫자로 바꿉니다 (A=1, B=2, …, Z=26, 공백=0).`}
+    if(i===1){box.innerHTML=`<span class="lbl">M =</span>${mat(Mm)}`;return `숫자를 두 개씩 끊어 <b>세로 한 줄(열)</b>에 넣습니다 → 2×${Mm[0].length} 행렬 M.`}
+    if(i===2){box.innerHTML=`<span class="lbl">E = K·M =</span>${mat(K,{hl:()=>'h'})}<span class="op">·</span>${mat(Mm)}<span class="op">=</span>${mat(E,{hl:()=>'g'})}`;return '열쇠 행렬 K를 곱해 암호문 E를 만듭니다 (10.1의 행렬 곱).'}
+    if(i===3){box.innerHTML=`<div class="fx">${E[0].map((_,j)=>E[0][j]+' '+E[1][j]).join(' · ')}</div>`;return '중간에 누가 가로채도 이런 숫자만 보입니다. 글자마다 같은 숫자로 바뀌지 않아 K를 모르면 원래 말을 알아내기 어렵습니다.'}
+    if(i===4){box.innerHTML=`<span class="lbl">K =</span>${mat(K)}<span class="op">→</span>`+(Ki?`<span class="lbl">K⁻¹ =</span>${mat(Ki,{hl:()=>'h'})}`:warn('K⁻¹ 없음'));
+      return Ki?`받는 사람은 열쇠의 역행렬 K⁻¹을 구해 둡니다 (|K| = ${fmt(dK)}, 10.6 가우스–조단으로 구한 값).`:`|K| = 0인 <b>특이행렬</b>을 열쇠로 쓰면 역행렬이 없어 <b>받는 사람도 풀 수 없습니다</b>. 그래서 열쇠는 반드시 역행렬이 있는 행렬이어야 합니다.`}
+    if(!Ki){box.innerHTML=warn('복호화할 수 없습니다');return '다른 열쇠를 골라 보세요.'}
+    const D=mmulF(Ki,E).map(r=>r.map(v=>v.v()));
+    if(i===5){box.innerHTML=`<span class="lbl">K⁻¹·E =</span>${mat(Ki)}<span class="op">·</span>${mat(E)}<span class="op">=</span>${mat(D,{hl:()=>'h3'})}`;return 'K⁻¹·E = K⁻¹·K·M = I·M = M. 원래 숫자 행렬로 돌아왔습니다.'}
+    const out=D[0].map((_,j)=>N2L(Math.round(D[0][j]))+N2L(Math.round(D[1][j]))).join('');box.innerHTML=`<div class="sentence">${out}</div>`;
+    return `숫자를 다시 글자로 바꾸면 “<b>${out.replace(/␣+$/,'').replace(/␣/g,' ')}</b>” — 보낸 말과 같습니다!`}
+  const st=Stepper($('#s6cst'),draw);['s6msg','s6key'].forEach(id=>$('#'+id).onchange=setup);setup()})();
+
+/* ========== 10.7 (A) x = A^-1 b ========== */
+(()=>{const A=[[1,2,3],[1,3,6],[2,6,13]],Ai=inverseF(A);let b;
+  $('#s7eq').innerHTML='x + 2y + 3z = b₁<br>x + 3y + 6z = b₂<br>2x + 6y + 13z = b₃';
+  function setup(){b=[1,2,3].map(k=>+$('#s7b'+k).value||0);st.reset(6)}
+  function draw(i){const x=mmulF(Ai,b.map(v=>[v])).map(r=>r[0]),row=i>=2&&i<=4?i-2:-1,rev=i<2?0:Math.min(3,i-1);
+    $('#s7show').innerHTML=`<span class="lbl">A =</span>${mat(A)}<span class="lbl">b =</span>${mat(b.map(v=>[v]))}`+(i>=1?`<span class="op">→</span><span class="lbl">x = A⁻¹b =</span>${mat(Ai,{hl:r=>r===row?'h':''})}<span class="op">·</span>${mat(b.map(v=>[v]),{hl:()=>row>=0?'g':''})}<span class="op">=</span>${mat(x.map(v=>[v]),{mask:r=>r>=rev,hl:r=>r===row?'h2':''})}`:'');
+    if(i===0)return '연립방정식을 Ax = b로 씁니다. A는 계수, b는 오른쪽 값, x = [x y z]는 구할 값입니다.';
+    if(i===1)return 'A의 역행렬을 구합니다(10.6의 가우스–조단). 한 번만 구해 두면 b가 바뀌어도 다시 쓸 수 있습니다.';
+    if(i<=4)return `${'xyz'[row]} = (A⁻¹의 ${row+1}행)·b = ${Ai[row].map((v,k)=>`${pr(v)}·${pr(b[k])}`).join(' + ')} = <b>${fmt(x[row])}</b>`;
+    const chk=A.map(r=>r.reduce((s,v,k)=>s+v*x[k].v(),0));return `해: <b>x = ${fmt(x[0])}, y = ${fmt(x[1])}, z = ${fmt(x[2])}</b><br>검산: ${chk.map((v,k)=>`${k+1}번 식 = ${fmt(v)} = b${'₁₂₃'[k]} ✓`).join(', ')}`}
+  const st=Stepper($('#s7st'),draw);[1,2,3].forEach(k=>$('#s7b'+k).onchange=setup);setup()})();
+
+/* ========== 10.7 (B) [A|b] elimination ========== */
+(()=>{const PRE={e20:[[1,2,3,1],[1,3,6,3],[2,6,13,5]],fruit:[[1,1,1,4500],[2,1,0,5000],[0,1,3,5000]],none:[[1,1,2],[1,1,3]],many:[[1,1,2],[2,2,4]]};
+  const STORY={e20:'예제 10-20: x + 2y + 3z = 1, x + 3y + 6z = 3, 2x + 6y + 13z = 5',fruit:'사과 x원, 배 y원, 귤 z원: 사과+배+귤 = 4500원, 사과 2개+배 1개 = 5000원, 배 1개+귤 3개 = 5000원 (예시 수치)',none:'x + y = 2, x + y = 3 (서로 모순되는 두 식)',many:'x + y = 2, 2x + 2y = 4 (사실상 같은 식)'};let steps,nv;
+  function load(k){const M=PRE[k];nv=M[0].length-1;steps=rrefSteps(M,{ncols:nv});$('#s7bstory').textContent=STORY[k];st.reset(steps.length+1)}
+  function draw(i){const L=steps.length,s=steps[Math.min(i,L-1)],E=echelon(s.M,nv),V='xyz';
+    $('#s7bM').innerHTML=mat(s.M,{aug:nv,hl:(r,c)=>s.el&&s.el[0]===r&&s.el[1]===c?'el':(c<nv&&E.L[r]===c?'pv':(c===nv?'g':''))});
+    if(i===0)return '계수와 오른쪽 값을 한 행렬에 붙인 <b>첨가행렬 [A | b]</b>에서 시작합니다. 세로선 오른쪽이 b입니다.';
+    if(i<L)return `<span class="eq">${s.op}</span> ${s.desc}`;
+    const M=s.M;if(M.some(r=>r.slice(0,nv).every(isZ)&&!isZ(r[nv])))return warn('0 = (0이 아닌 수)')+'인 행이 생겼습니다 → 모순이므로 <b>해가 없습니다</b>. (두 직선이 평행한 경우)';
+    const piv=steps.pivots.map(p=>p[1]);if(piv.length<nv){const free=[...Array(nv).keys()].filter(c=>!piv.includes(c));
+      return `피벗이 없는 변수 ${free.map(c=>V[c]).join(', ')}는 아무 값이나 될 수 있습니다(자유변수) → <b>해가 무수히 많습니다</b>. 예: ${steps.pivots.map(([r,c])=>`${V[c]} = ${fmt(M[r][nv])}${free.map(f=>isZ(M[r][f])?'':` − ${isOne(M[r][f])?'':pr(M[r][f])}${V[f]}`).join('')}`).join(', ')}`}
+    return `기약 행 사다리꼴에서 바로 읽으면: <b>${steps.pivots.map(([r,c])=>`${V[c]} = ${fmt(M[r][nv])}`).join(', ')}</b> (해가 하나)`}
+  const st=Stepper($('#s7bst'),draw);$$('[data-s7b]').forEach(b=>b.onclick=()=>load(b.dataset.s7b));load('e20')})();
+
+/* ========== 10.7 (C) two lines ========== */
+(()=>{const ids=['s7a1','s7b1c','s7c1','s7a2','s7b2c','s7c2'],PRE={food:[2,1,10,1,2,11],par:[1,1,4,2,2,12],same:[1,1,6,2,2,12]};
+  function draw(){const[a1,b1,c1,a2,b2,c2]=ids.map(id=>+$('#'+id).value||0),D=a1*b2-a2*b1,svg=$('#s7g');svg.innerHTML='';const S=27,ox=34,oy=290,X=x=>ox+x*S,Y=y=>oy-y*S;
+    const defs=sv('defs');const cp=sv('clipPath',{id:'s7clip'});cp.appendChild(sv('rect',{x:X(0),y:Y(10),width:10*S,height:10*S}));defs.appendChild(cp);svg.appendChild(defs);
+    for(let k=0;k<=10;k++){svg.appendChild(sv('line',{x1:X(k),y1:Y(0),x2:X(k),y2:Y(10),stroke:k?'#eef2f6':'#9aa6b2'}));svg.appendChild(sv('line',{x1:X(0),y1:Y(k),x2:X(10),y2:Y(k),stroke:k?'#eef2f6':'#9aa6b2'}));
+      if(k%2===0){svg.appendChild(sv('text',{x:X(k),y:oy+14,'text-anchor':'middle','font-size':10,fill:'#5d6b7a'},k));if(k)svg.appendChild(sv('text',{x:ox-5,y:Y(k)+4,'text-anchor':'end','font-size':10,fill:'#5d6b7a'},k))}}
+    svg.appendChild(sv('text',{x:X(10),y:oy-5,'text-anchor':'end','font-size':11,fill:'#5d6b7a'},'김밥 x (천 원)'));svg.appendChild(sv('text',{x:X(0)+5,y:Y(10)+12,'font-size':11,fill:'#5d6b7a'},'라면 y (천 원)'));
+    const g=sv('g',{'clip-path':'url(#s7clip)'});svg.appendChild(g);
+    const line=(a,b,c,col,w)=>{let p;if(Math.abs(b)>1e-9)p=[[-1,(c+a)/b],[11,(c-11*a)/b]];else if(Math.abs(a)>1e-9)p=[[c/a,-1],[c/a,11]];else return;g.appendChild(sv('line',{x1:X(p[0][0]),y1:Y(p[0][1]),x2:X(p[1][0]),y2:Y(p[1][1]),stroke:col,'stroke-width':w,'stroke-linecap':'round'}))};
+    line(a1,b1,c1,'#1597c9',4);line(a2,b2,c2,'#d98200',2.5);
+    let t=`<span style="color:#1597c9">■</span> ${fmt(a1)}x + ${fmt(b1)}y = ${fmt(c1)} &nbsp; <span style="color:#d98200">■</span> ${fmt(a2)}x + ${fmt(b2)}y = ${fmt(c2)}<br><span class="lbl">계수 행렬식</span> ${mat([[a1,b1],[a2,b2]],{det:true})} = ${pr(a1)}·${pr(b2)} − ${pr(b1)}·${pr(a2)} = <b>${fmt(D)}</b><br>`;
+    if(Math.abs(D)>1e-9){const x=(c1*b2-c2*b1)/D,y=(a1*c2-a2*c1)/D;if(x>=0&&x<=10&&y>=0&&y<=10)svg.appendChild(sv('circle',{cx:X(x),cy:Y(y),r:7,fill:'#18a957',stroke:'#fff','stroke-width':2}));
+      t+=`행렬식 ≠ 0 → 두 직선이 한 점(초록)에서 만남 → <b>해가 하나</b><br>김밥 x = <span class="big">${fmt(x)}</span>천 원, 라면 y = <span class="big">${fmt(y)}</span>천 원`}
+    else{const same=Math.abs(a1*c2-a2*c1)<1e-9&&Math.abs(b1*c2-b2*c1)<1e-9;t+=same?'행렬식 = 0, 두 식이 같은 직선 → <b>해가 무수히 많음</b> (정보가 부족해 가격을 하나로 정할 수 없음)':'행렬식 = 0, 두 직선이 평행 → <b>해가 없음</b> (두 주문서가 서로 모순)'}
+    $('#s7gout').innerHTML=t}
+  ids.forEach(id=>$('#'+id).oninput=draw);$$('[data-s7c]').forEach(b=>b.onclick=()=>{PRE[b.dataset.s7c].forEach((v,k)=>$('#'+ids[k]).value=v);draw()});draw()})();
+
+/* ========== 10.8 (A) one layer ========== */
+(()=>{let W;$('#s8W').innerHTML=matEd('s8We',[[1,3,5],[2,4,6]]);
+  function setup(){W=readEd('s8We');st.reset(5)}
+  function draw(i){const X=[+$('#s8x1').value||0,+$('#s8x2').value||0],Y=mmul([X],W)[0],svg=$('#s8svg');svg.innerHTML='';
+    const IN=[[60,90],[60,190]],OUT=[[285,45],[285,130],[285,215]],cur=i>=1&&i<=3?i-1:-1,mx=Math.max(1,...W.flat().map(Math.abs));
+    W.forEach((r,a)=>r.forEach((w,b)=>{const on=cur===b;svg.appendChild(sv('line',{x1:IN[a][0]+24,y1:IN[a][1],x2:OUT[b][0]-24,y2:OUT[b][1],stroke:w<0?'#e2574c':(on?'#f2a516':'#1597c9'),'stroke-width':1+4*Math.abs(w)/mx,opacity:cur<0||on?.9:.2}))}));
+    if(cur>=0)W.forEach((r,a)=>{const w=r[cur],t=a?0.68:0.32,x=IN[a][0]+24+(OUT[cur][0]-IN[a][0]-48)*t,y=IN[a][1]+(OUT[cur][1]-IN[a][1])*t;svg.appendChild(sv('text',{x,y:y-6,'text-anchor':'middle','font-size':12,'font-weight':700,fill:'#9a6500'},`w${a+1}${cur+1}=${fmt(w)}`))});
+    const node=(x,y,t,hl)=>{svg.appendChild(sv('circle',{cx:x,cy:y,r:24,fill:hl?'#fff5dd':'#fff',stroke:hl?'#f2a516':'#1d2733','stroke-width':hl?2.5:1.5}));svg.appendChild(sv('text',{x,y:y+5,'text-anchor':'middle','font-size':12.5,'font-weight':700,fill:'#1d2733'},t))};
+    IN.forEach(([x,y],a)=>node(x,y,`x${a+1}=${fmt(X[a])}`,false));OUT.forEach(([x,y],b)=>node(x,y,i>=4||b<i?`y${b+1}=${fmt(Y[b])}`:`y${b+1}`,b===cur));
+    svg.appendChild(sv('text',{x:60,y:250,'text-anchor':'middle','font-size':12,fill:'#5d6b7a'},'입력 X'));svg.appendChild(sv('text',{x:285,y:254,'text-anchor':'middle','font-size':12,fill:'#5d6b7a'},'출력 Y'));
+    $('#s8eq').innerHTML=`<span class="lbl">X·W =</span>${mat([X])}<span class="op">·</span>${mat(W,{hl:(r,c)=>c===cur?'g':''})}<span class="op">=</span>${mat([Y],{mask:(r,c)=>!(i>=4||c<i),hl:(r,c)=>c===cur?'h2':''})}`;
+    if(i===0)return '입력 X = [x₁ x₂] (1×2)와 연결강도 W (2×3)를 곱하면 출력 Y (1×3)가 나옵니다. [다음 ▶]으로 출력을 하나씩 계산해 보세요.';
+    if(i<=3){const b=cur;return `y${b+1} = x₁·w<sub>1${b+1}</sub> + x₂·w<sub>2${b+1}</sub> = ${pr(X[0])}·${pr(W[0][b])} + ${pr(X[1])}·${pr(W[1][b])} = <b>${fmt(Y[b])}</b> (X와 W의 ${b+1}열을 곱한 값)`}
+    return `Y = X·W = [${Y.map(fmt).join('  ')}]${X[0]===1&&X[1]===2&&W.flat().join()==='1,3,5,2,4,6'?' — 그림 10.8의 결과 [5 11 17]과 같습니다.':''}<br>실제 신경망은 입력·출력이 수천 개인 이런 곱셈을 GPU로 한꺼번에 계산합니다.`}
+  const st=Stepper($('#s8st'),draw);['s8x1','s8x2'].forEach(id=>$('#'+id).oninput=()=>st.redraw());$('#s8W').addEventListener('change',setup);setup()})();
+
+/* ========== 10.8 (B) multilayer ========== */
+(()=>{const W1=[[2,-1,0.5],[0.5,0.3,0.5],[-1.5,2,0.5]],W2=[[2,-1],[-1,2],[0.2,0.2]],FN=['빨간 정도','크기','울퉁불퉁'],HN=['h₁','h₂','h₃'],ON=['사과','귤'];
+  const ids=['s8f1','s8f2','s8f3'],PRE={apple:[0.9,0.6,0.1],tang:[0.2,0.4,0.9],mix:[0.5,0.5,0.5]},f2=v=>v.toFixed(2);
+  function draw(i){const X=ids.map(id=>+$('#'+id).value);ids.forEach((id,k)=>$('#'+id+'v').textContent=X[k].toFixed(1));
+    const Z1=mmul([X],W1)[0],H=Z1.map(v=>Math.max(0,v)),Z2=mmul([H],W2)[0],ex=Z2.map(Math.exp),sm=ex[0]+ex[1],Pp=ex.map(v=>v/sm);
+    const svg=$('#s8b');svg.innerHTML='';const xi=70,xh=320,xo=570,yi=[40,110,180],yo=[75,145];
+    const edge=(x1,y1,x2,y2,w,on)=>svg.appendChild(sv('line',{x1,y1,x2,y2,stroke:w<0?'#e2574c':'#1597c9','stroke-width':0.8+1.6*Math.abs(w),opacity:on?.85:.15}));
+    W1.forEach((r,a)=>r.forEach((w,b)=>edge(xi+28,yi[a],xh-28,yi[b],w,i===1)));W2.forEach((r,a)=>r.forEach((w,b)=>edge(xh+28,yi[a],xo-28,yo[b],w,i===3)));
+    const node=(x,y,top,bot,hl)=>{svg.appendChild(sv('circle',{cx:x,cy:y,r:28,fill:hl?'#fff5dd':'#fff',stroke:hl?'#f2a516':'#1d2733','stroke-width':hl?2.5:1.3}));svg.appendChild(sv('text',{x,y:y-4,'text-anchor':'middle','font-size':10.5,fill:'#5d6b7a'},top));svg.appendChild(sv('text',{x,y:y+12,'text-anchor':'middle','font-size':12.5,'font-weight':700,fill:'#1d2733'},bot))};
+    X.forEach((v,k)=>node(xi,yi[k],FN[k],v.toFixed(1),i===0));
+    H.forEach((v,k)=>node(xh,yi[k],HN[k],i>=2?f2(v):(i===1?f2(Z1[k]):'?'),i===1||i===2));
+    Pp.forEach((v,k)=>node(xo,yo[k],ON[k],i>=4?(v*100).toFixed(0)+'%':(i===3?f2(Z2[k]):'?'),i>=3&&(i===3||v>=0.5)));
+    ['입력층 X (1×3)','은닉층 H (1×3)','출력층 (1×2)'].forEach((t,k)=>svg.appendChild(sv('text',{x:[xi,xh,xo][k],y:228,'text-anchor':'middle','font-size':12,'font-weight':700,fill:'#5d6b7a'},t)));
+    if(i===0)return `입력 X = [${X.map(v=>v.toFixed(1)).join(', ')}]. 슬라이더로 과일의 특징을 바꾼 뒤 [다음 ▶]을 누르세요.`;
+    if(i===1)return `1층 행렬 곱: Z₁ = X·W₁ = [${Z1.map(f2).join(', ')}] &nbsp;<span class="lbl">W₁ =</span>${mat(W1,{cls:'sm'})}`;
+    if(i===2)return `활성화 함수 ReLU: 음수는 0으로 바꿉니다 → H = [${H.map(f2).join(', ')}]. (이 단계가 없으면 행렬 곱을 여러 번 해도 결국 한 번의 곱과 같아집니다)`;
+    if(i===3)return `2층 행렬 곱: Z₂ = H·W₂ = [${Z2.map(f2).join(', ')}] &nbsp;<span class="lbl">W₂ =</span>${mat(W2,{cls:'sm'})}`;
+    const win=Pp[0]>=Pp[1]?0:1;return `softmax로 점수를 확률로 바꾸면 사과 ${(Pp[0]*100).toFixed(1)}%, 귤 ${(Pp[1]*100).toFixed(1)}% → 예측: <span class="big">${ON[win]}</span><br><span class="note">실제 AI는 가중치 W₁, W₂를 수많은 사진으로부터 스스로 학습합니다(학습 = 가중치 행렬을 조금씩 고치는 일).</span>`}
+  const st=Stepper($('#s8bst'),draw);st.reset(5);ids.forEach(id=>$('#'+id).oninput=()=>st.redraw());$$('[data-s8b]').forEach(b=>b.onclick=()=>{PRE[b.dataset.s8b].forEach((v,k)=>$('#'+ids[k]).value=v);st.redraw()})})();
+
+/* ========== 10.9 (A) convolution ========== */
+(()=>{const IN0=[[1,2,3,4,5],[2,1,0,1,2],[3,0,1,1,0],[1,4,1,1,2],[2,1,1,0,0]],STR=[[0,0,5,0,0],[0,0,5,0,0],[0,0,5,0,0],[0,0,5,0,0],[0,0,5,0,0]];
+  const FL={book:[[1,0,1],[1,0,1],[0,1,0]],vert:[[1,0,-1],[1,0,-1],[1,0,-1]],hor:[[1,1,1],[0,0,0],[-1,-1,-1]],avg:[[1,1,1],[1,1,1],[1,1,1]]};let I=cloneM(IN0),Fk='book';
+  const grid=(M,cls)=>`<div class="cg" style="grid-template-columns:repeat(${M[0].length},34px)">${M.map((r,i)=>r.map((v,j)=>`<div class="${cls(i,j)}" data-i="${i}" data-j="${j}">${fmt(v)}</div>`).join('')).join('')}</div>`;
+  function draw(i){const F=FL[Fk],R=[0,1,2].map(a=>[0,1,2].map(b=>{let s=0;for(let p=0;p<3;p++)for(let q=0;q<3;q++)s+=I[a+p][b+q]*F[p][q];return s})),k=i>=1&&i<=9?i-1:-1,wa=Math.floor(k/3),wb=k%3;
+    $('#s9in').innerHTML='<div class="note">입력 데이터 (클릭하면 값 변경)</div>'+grid(I,(a,b)=>k>=0&&a>=wa&&a<wa+3&&b>=wb&&b<wb+3?'w':'');
+    $('#s9f').innerHTML='<div class="note">필터</div>'+grid(F,()=>'f');
+    $('#s9out').innerHTML='<div class="note">결과 (특징 맵)</div>'+grid(R,(a,b)=>{const n=a*3+b;return n===k?'cur':(i>=10||n<k?'r':'e')});
+    if(i===0)return '필터(3×3)를 입력의 왼쪽 위에 겹치는 것부터 시작합니다. [다음 ▶]을 누르세요.';
+    if(i<=9){const t=[];for(let p=0;p<3;p++)for(let q=0;q<3;q++)t.push(`(${fmt(I[wa+p][wb+q])}×${fmt(F[p][q])})`);return `결과 (${wa+1}, ${wb+1}) 칸: ${t.join('+')} = <b>${fmt(R[wa][wb])}</b>`}
+    return `9번 계산해서 3×3 특징 맵 완성! ${Fk==='vert'?'세로선 필터는 왼쪽과 오른쪽의 밝기 차이가 클수록 큰 값(+ 또는 −)을 냅니다. [세로 줄무늬] 입력으로 확인해 보세요.':Fk==='hor'?'가로선 필터는 위와 아래의 밝기 차이를 찾습니다. 세로 줄무늬에서는 0이 나옵니다.':Fk==='avg'?'모두 1인 필터는 주변 값을 모두 더해 흐리게(평균) 만듭니다.':'교재 그림 10.10과 같은 필터입니다. 첫 칸이 6인지 확인하세요.'}`}
+  const st=Stepper($('#s9st'),draw);st.reset(11);
+  $('#s9in').addEventListener('click',e=>{const d=e.target.closest('[data-i]');if(!d)return;const a=+d.dataset.i,b=+d.dataset.j;I[a][b]=(I[a][b]+1)%6;st.redraw()});
+  segInit('s9fs',v=>{Fk=v;st.reset(11)});$$('[data-s9i]').forEach(b=>b.onclick=()=>{I=cloneM(b.dataset.s9i==='book'?IN0:STR);st.reset(11)})})();
+
+/* ========== 10.9 (B) draw + filter ========== */
+(()=>{const N=16,G=Array.from({length:N},()=>Array(N).fill(0)),FL={vert:[[1,0,-1],[1,0,-1],[1,0,-1]],hor:[[1,1,1],[0,0,0],[-1,-1,-1]],edge:[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]],blur:[[1,1,1],[1,1,1],[1,1,1]].map(r=>r.map(v=>v/9)),sharp:[[0,-1,0],[-1,5,-1],[0,-1,0]]};
+  const NOTE={vert:'세로선 필터(왼쪽 − 오른쪽): 그림의 왼쪽 경계는 빨강, 오른쪽 경계는 파랑으로 나타나고 가로선은 사라집니다.',hor:'가로선 필터(위 − 아래): 위쪽 경계는 빨강, 아래쪽 경계는 파랑. 세로선은 사라집니다.',edge:'테두리 필터: 모양의 윤곽만 남습니다. 사람이 물체를 알아볼 때 쓰는 단서와 비슷합니다.',blur:'흐리게: 주변 9칸의 평균이라 경계가 부드러워집니다.',sharp:'선명하게: 가운데를 강조하고 주변을 빼서 경계가 또렷해집니다.'};let fk='vert';
+  const cv=$('#s9cv'),cx=cv.getContext('2d'),fm=$('#s9fm'),fx=fm.getContext('2d'),S=320/N;
+  function sample(){G.forEach(r=>r.fill(0));for(let i=3;i<13;i++){G[i][3]=G[i][12]=G[3][i]=G[12][i]=1}for(let i=6;i<10;i++)for(let j=6;j<10;j++)G[i][j]=1}
+  function draw(){cx.fillStyle='#fff';cx.fillRect(0,0,320,320);for(let i=0;i<N;i++)for(let j=0;j<N;j++){cx.fillStyle=G[i][j]?'#1d2733':'#eef4f8';cx.fillRect(j*S+1,i*S+1,S-2,S-2)}
+    const F=FL[fk],M=N-2,R=[];let mx=0;for(let i=0;i<M;i++){R.push([]);for(let j=0;j<M;j++){let s=0;for(let p=0;p<3;p++)for(let q=0;q<3;q++)s+=G[i+p][j+q]*F[p][q];R[i].push(s);mx=Math.max(mx,Math.abs(s))}}
+    const T=320/M;fx.fillStyle='#fff';fx.fillRect(0,0,320,320);for(let i=0;i<M;i++)for(let j=0;j<M;j++){const v=mx?R[i][j]/mx:0;fx.fillStyle='#f1f5f8';fx.fillRect(j*T+1,i*T+1,T-2,T-2);if(Math.abs(v)>0.01){fx.fillStyle=v>0?`rgba(21,151,201,${0.15+0.85*v})`:`rgba(226,87,76,${0.15-0.85*v})`;fx.fillRect(j*T+1,i*T+1,T-2,T-2)}}
+    $('#s9bmsg').innerHTML=`<b>${NOTE[fk]}</b><br>필터 ${mat(F,{cls:'sm'})} 를 16×16 그림 위에서 한 칸씩 밀며 곱하고 더했습니다 (14×14 = 196번 계산).`}
+  let pen=null;const cell=e=>{const r=cv.getBoundingClientRect();return[Math.floor((e.clientY-r.top)/r.height*N),Math.floor((e.clientX-r.left)/r.width*N)]},ok=([i,j])=>i>=0&&j>=0&&i<N&&j<N;
+  cv.addEventListener('pointerdown',e=>{const c=cell(e);if(!ok(c))return;e.preventDefault();pen=G[c[0]][c[1]]?0:1;G[c[0]][c[1]]=pen;try{cv.setPointerCapture(e.pointerId)}catch(_){}draw()});
+  cv.addEventListener('pointermove',e=>{if(pen==null)return;const c=cell(e);if(ok(c)&&G[c[0]][c[1]]!==pen){G[c[0]][c[1]]=pen;draw()}});
+  ['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>pen=null));
+  segInit('s9bf',v=>{fk=v;draw()});$('#s9bsample').onclick=()=>{sample();draw()};$('#s9bclr').onclick=()=>{G.forEach(r=>r.fill(0));draw()};sample();draw()})();
+
+/* ========== 10.9 (C) linear transform ========== */
+(()=>{const ids=['s9ta','s9tb','s9tc','s9td'],c30=0.87,s30=0.5,PRE={I:[1,0,0,1],sc:[2,0,0,2],rot:[c30,-s30,s30,c30],sh:[1,1,0,1],ref:[-1,0,0,1],flat:[1,2,0.5,1]};
+  const H=[[0,0],[2,0],[2,1.5],[1,2.4],[0,1.5]],area=P=>Math.abs(P.reduce((s,[x,y],k)=>{const[x2,y2]=P[(k+1)%P.length];return s+x*y2-x2*y},0))/2;
+  function draw(){const v=ids.map(id=>+$('#'+id).value),[a,b,c,d]=v;ids.forEach((id,k)=>$('#'+id+'v').textContent=v[k].toFixed(2));const D=a*d-b*c,svg=$('#s9t');svg.innerHTML='';const S=30,O=160,X=x=>O+x*S,Y=y=>O-y*S;
+    for(let k=-5;k<=5;k++){svg.appendChild(sv('line',{x1:X(k),y1:0,x2:X(k),y2:320,stroke:k?'#eef2f6':'#9aa6b2'}));svg.appendChild(sv('line',{x1:0,y1:Y(k),x2:320,y2:Y(k),stroke:k?'#eef2f6':'#9aa6b2'}))}
+    const P2=H.map(([x,y])=>[a*x+b*y,c*x+d*y]),poly=(P,at)=>svg.appendChild(sv('polygon',Object.assign({points:P.map(([x,y])=>X(x)+','+Y(y)).join(' ')},at)));
+    poly(H,{fill:'none',stroke:'#9aa6b2','stroke-width':1.5,'stroke-dasharray':'4 4'});poly(P2,{fill:Math.abs(D)<1e-6?'none':(D>0?'rgba(21,151,201,.25)':'rgba(226,87,76,.22)'),stroke:Math.abs(D)<1e-6?'#e2574c':'#1597c9','stroke-width':2.5});
+    svg.appendChild(sv('circle',{cx:X(1),cy:Y(2.4),r:4.5,fill:'#9aa6b2'}));svg.appendChild(sv('circle',{cx:X(P2[3][0]),cy:Y(P2[3][1]),r:6,fill:'#f2a516'}));
+    $('#s9tout').innerHTML=`<span class="lbl">변환 행렬 M =</span>${mat([[a,b],[c,d]])}<br>지붕 꼭대기 (1, 2.4) → M·(1, 2.4) = (<b>${(a+2.4*b).toFixed(2)}</b>, <b>${(c+2.4*d).toFixed(2)}</b>) (주황 점)<br>
+      원래 넓이 ${area(H).toFixed(2)} → 바뀐 넓이 <b>${area(P2).toFixed(2)}</b><br>det(M) = ad − bc = <b>${D.toFixed(2)}</b> → 넓이가 정확히 |det| = ${Math.abs(D).toFixed(2)}배<br>`+
+      (Math.abs(D)<1e-6?warn('det = 0: 그림이 선으로 납작해져 원래 모양으로 되돌릴 수 없습니다 (역행렬 없음).'):D<0?'det &lt; 0: 거울에 비친 것처럼 뒤집혔습니다.':'점선(원래 집)과 비교해 보세요.')}
+  ids.forEach(id=>$('#'+id).oninput=draw);$$('[data-s9t]').forEach(b=>b.onclick=()=>{PRE[b.dataset.s9t].forEach((v,k)=>$('#'+ids[k]).value=v);draw()});draw()})();
+
+/* ========== 10.9 (D) traffic flow ========== */
+(()=>{const AUG=[[1,-1,0,0,160],[0,1,-1,0,-40],[0,0,1,-1,210],[-1,0,0,1,-330]],RR=rrefSteps(AUG,{ncols:4});const RM=RR[RR.length-1].M;
+  $('#s9treq').innerHTML='A: 450 + x₁ = 610 + x₂ → x₁ − x₂ = 160<br>B: 520 + x₂ = 480 + x₃ → x₂ − x₃ = −40<br>C: 390 + x₃ = 600 + x₄ → x₃ − x₄ = 210<br>D: 640 + x₄ = 310 + x₁ → −x₁ + x₄ = −330';
+  $('#s9trM').innerHTML='<span class="lbl">[A | b]의 RREF =</span>'+mat(RM,{aug:4,hl:(r,c)=>r===3?'zr':(c===3?'g':'')});
+  function draw(){const x4=+$('#s9x4').value;$('#s9x4v').textContent=x4;const x=[x4+330,x4+170,x4+210,x4],svg=$('#s9tr');svg.innerHTML='';
+    const defs=sv('defs'),mk=sv('marker',{id:'s9ar',viewBox:'0 0 10 10',refX:8,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'});mk.appendChild(sv('path',{d:'M0,0L10,5L0,10z',fill:'#1d2733'}));defs.appendChild(mk);
+    const mk2=sv('marker',{id:'s9ar2',viewBox:'0 0 10 10',refX:8,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'});mk2.appendChild(sv('path',{d:'M0,0L10,5L0,10z',fill:'#1597c9'}));defs.appendChild(mk2);svg.appendChild(defs);
+    [[25,90,315,90],[25,210,315,210],[110,15,110,285],[230,15,230,285]].forEach(([x1,y1,x2,y2])=>svg.appendChild(sv('line',{x1,y1,x2,y2,stroke:'#e3e9ee','stroke-width':22,'stroke-linecap':'round'})));
+    const arr=(x1,y1,x2,y2,t,tx,ty,inner)=>{svg.appendChild(sv('line',{x1,y1,x2,y2,stroke:inner?'#1597c9':'#1d2733','stroke-width':inner?3:2,'marker-end':`url(#${inner?'s9ar2':'s9ar'})`}));svg.appendChild(sv('text',{x:tx,y:ty,'text-anchor':'middle','font-size':inner?12.5:12,'font-weight':700,fill:inner?'#0f6f96':'#1d2733'},t))};
+    arr(110,18,110,68,'450',132,36);arr(88,90,30,90,'610',56,80);arr(230,68,230,18,'310',252,36);arr(312,90,252,90,'640',286,80);
+    arr(30,210,88,210,'520',56,200);arr(110,232,110,282,'480',132,272);arr(252,210,312,210,'600',286,200);arr(230,282,230,232,'390',252,272);
+    arr(208,90,132,90,`x₁=${x[0]}`,170,80,1);arr(110,112,110,188,`x₂=${x[1]}`,70,154,1);arr(132,210,208,210,`x₃=${x[2]}`,170,232,1);arr(230,188,230,112,`x₄=${x[3]}`,272,154,1);
+    [['A',110,90],['D',230,90],['B',110,210],['C',230,210]].forEach(([n,cx,cy])=>{svg.appendChild(sv('rect',{x:cx-14,y:cy-14,width:28,height:28,rx:6,fill:'#fff',stroke:'#1d2733','stroke-width':1.5}));svg.appendChild(sv('text',{x:cx,y:cy+5,'text-anchor':'middle','font-size':14,'font-weight':900,fill:'#1d2733'},n))});
+    $('#s9trout').innerHTML=`RREF의 마지막 행이 모두 0 → 독립인 식은 3개(<b>계수 3</b>), 변수는 4개 → 자유변수 1개(x₄)<br>x₁ = x₄ + 330 = <b>${x[0]}</b>, x₂ = x₄ + 170 = <b>${x[1]}</b>, x₃ = x₄ + 210 = <b>${x[2]}</b>, x₄ = <b>${x[3]}</b><br>
+      검산 A: 450 + ${x[0]} = ${450+x[0]}, 610 + ${x[1]} = ${610+x[1]} ✓<br><span class="note">차 대수는 0 이상이어야 하므로 x₄ = 0일 때가 가장 적게 다니는 경우입니다(x₁ = 330, x₂ = 170, x₃ = 210). 도로 공사로 C→D 도로를 막아도(x₄ = 0) 흐름이 유지됩니다.</span>`}
+  $('#s9x4').oninput=draw;draw()})();
+
+/* ========== quizzes ========== */
+const QUIZ={m1:['A가 2×3, B가 3×4 행렬일 때 AB의 크기는? (예: 5x2)','2x4','내측 3 = 3, 결과는 외측 두 수'],
+  m2:['A = [−5 3; 4 2]의 대각합 tr(A)는?','-3','대각선 성분의 합: −5 + 2'],
+  m3:['행렬 [1 0 2 5; 0 0 1 2]의 계수(rank)는?','2','0이 아닌 행의 개수'],
+  m4:['A = [2 1; 1 4]의 행렬식은?','7','ad − bc = 2·4 − 1·1'],
+  m5:['Det(A) = 4, Det(B) = −3일 때 Det(AB)는?','-12','정리 10-6: Det(AB) = Det(A)·Det(B)'],
+  m6:['A = [3 4; 2 3]의 역행렬에서 1행 2열 성분은?','-4','예제 10-19: A⁻¹ = [3 −4; −2 3]'],
+  m7:['예제 10-20에서 z의 값은?','-1','A⁻¹의 3행 [0 −2 1]과 b = [1 3 5]의 곱'],
+  m8:['X = [1 2], W = [1 3 5; 2 4 6]일 때 y₂는?','11','1·3 + 2·4'],
+  m9:['그림 10.10에서 필터를 오른쪽으로 한 칸 옮긴 결과(1행 2열 칸)는?','9','시뮬레이터에서 [다음 ▶]을 두 번 눌러 확인']};
+const parseAns=s=>{s=String(s).trim().toLowerCase().replace(/\s/g,'').replace(/[×*]/g,'x').replace(/−/g,'-');const m=s.match(/^(-?\d+)\/(\d+)$/);if(m)return +m[1]/+m[2];const v=Number(s);return isNaN(v)?s:v};
+$$('.quiz').forEach(el=>{const[q,a,hint]=QUIZ[el.dataset.q];el.innerHTML=`<div class="q">✏️ 확인 문제: ${q}</div><input placeholder="답 입력" aria-label="답"> <button class="btn pri">확인</button> <button class="btn">힌트</button><span class="res"></span>`;
+  const[ok,hb]=$$('button',el),inp=$('input',el),res=$('.res',el);
+  const chk=()=>{const u=parseAns(inp.value),r=parseAns(a);const good=typeof u==='number'&&typeof r==='number'?Math.abs(u-r)<1e-9:u===r;res.className='res '+(good?'ok':'no');res.textContent=good?'정답! 👍':'다시 생각해 보세요.'};
+  ok.onclick=chk;inp.onkeydown=e=>{if(e.key==='Enter')chk()};hb.onclick=()=>{res.className='res';res.textContent='힌트: '+hint}});
+
+show(location.hash.slice(1)||'m1');
+
+</script>
+</body>
+</html>
