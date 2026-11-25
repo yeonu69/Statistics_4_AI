@@ -203,6 +203,12 @@ canvas{width:100%;max-width:320px;height:auto;display:block;margin:0 auto;border
 <main id="main">
 
 <!-- ========== 10.1 ========== -->
+<section class="lab" id="videos">
+  <h2><span class="no">▶</span>10장 강의 영상</h2>
+  <div class="goal">시뮬레이터를 하기 전에 1~2분짜리 짧은 영상으로 개념을 먼저 잡아 보세요. 영상 아래 [실습하러 가기]를 누르면 해당 절의 시뮬레이터로 이동합니다. 각 절 탭의 맨 위에도 같은 영상이 있습니다.</div>
+  <div class="vgrid" id="vgrid"></div>
+</section>
+
 <section class="lab" id="m1">
   <h2><span class="no">10.1</span>행렬과 행렬의 연산</h2>
   <div class="goal">행렬은 수를 <b>행(가로줄)</b>과 <b>열(세로줄)</b>로 늘어놓은 표입니다. 행이 m개, 열이 n개면 <span class="eq">m×n 행렬</span>, i행 j열의 값은 <span class="eq">a<sub>ij</sub></span>. 성적표·판매표·장보기 영수증처럼 생활 속 표가 모두 행렬입니다.</div>
@@ -571,9 +577,9 @@ function inverseF(A){const n=A.length;const aug=A.map((r,i)=>[...r.map(toFr),...
 const warn=t=>`<b style="color:var(--warn)">${t}</b>`;
 
 /* ---------- tabs ---------- */
-const LABS=[['m1','10.1','행렬과 연산'],['m2','10.2','특수한 행렬'],['m3','10.3','행 연산·사다리꼴'],['m4','10.4','행렬식'],['m5','10.5','행렬식의 성질'],['m6','10.6','역행렬'],['m7','10.7','연립방정식'],['m8','10.8','신경망'],['m9','10.9','응용과 AI']];
+const LABS=[['videos','▶','강의 영상'],['m1','10.1','행렬과 연산'],['m2','10.2','특수한 행렬'],['m3','10.3','행 연산·사다리꼴'],['m4','10.4','행렬식'],['m5','10.5','행렬식의 성질'],['m6','10.6','역행렬'],['m7','10.7','연립방정식'],['m8','10.8','신경망'],['m9','10.9','응용과 AI']];
 $('#tabs').innerHTML=LABS.map(([id,n,t])=>`<button data-id="${id}"><b>${n}</b>${t}</button>`).join('');
-function show(id){if(!LABS.find(l=>l[0]===id))id='m1';$$('section.lab').forEach(s=>s.classList.toggle('on',s.id===id));$$('#tabs button').forEach(b=>{const on=b.dataset.id===id;b.classList.toggle('on',on);if(on)b.scrollIntoView({block:'nearest',inline:'center'})})}
+function show(id){if(!LABS.find(l=>l[0]===id))id='videos';document.querySelectorAll('video').forEach(v=>v.pause());$$('section.lab').forEach(s=>s.classList.toggle('on',s.id===id));$$('#tabs button').forEach(b=>{const on=b.dataset.id===id;b.classList.toggle('on',on);if(on)b.scrollIntoView({block:'nearest',inline:'center'})})}
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;location.hash=b.dataset.id;show(b.dataset.id);window.scrollTo({top:0})});
 window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
 
@@ -948,6 +954,24 @@ let getS3M=()=>PRE3.e13;
       검산 A: 450 + ${x[0]} = ${450+x[0]}, 610 + ${x[1]} = ${610+x[1]} ✓<br><span class="note">차 대수는 0 이상이어야 하므로 x₄ = 0일 때가 가장 적게 다니는 경우입니다(x₁ = 330, x₂ = 170, x₃ = 210). 도로 공사로 C→D 도로를 막아도(x₄ = 0) 흐름이 유지됩니다.</span>`}
   $('#s9x4').oninput=draw;draw()})();
 
+/* ========== lecture videos ========== */
+(()=>{const VD=[
+  {f:'복잡한_데이터를_한_번에_처리하는_행렬의_마법',sec:'10.1 행렬과 연산',lab:'m1',d:'1:17',desc:'표 모양의 데이터를 행렬로 묶어 덧셈·곱셈을 한 번에 처리하는 원리'},
+  {f:'행렬을_뒤집는_마법,_전치행렬의_원리',sec:'10.2 특수한 행렬',lab:'m2',d:'1:42',desc:'행과 열을 바꾸는 전치행렬과 대칭행렬'},
+  {f:'복잡한_행렬을_깔끔한_계단으로_깎는_법',sec:'10.3 행 연산·사다리꼴',lab:'m3',d:'1:24',desc:'기본 행 연산으로 행 사다리꼴·기약 행 사다리꼴 만들기'},
+  {f:'행렬식의_곱셈_성질,_계산을_줄이는_마법',sec:'10.4·10.5 행렬식',lab:'m5',d:'1:16',desc:'Det(AB) = Det(A)·Det(B) 등 행렬식의 성질로 계산 줄이기'},
+  {f:'역행렬이_복잡한_방정식을_푸는_원리',sec:'10.6 역행렬 · 10.7 연립방정식',lab:'m6',d:'1:25',desc:'A⁻¹을 곱해 Ax = b의 해 x = A⁻¹b를 구하는 원리'},
+  {f:'인공지능이_이미지를_보는_방법__행렬의_합성곱',sec:'10.9 CNN 합성곱',lab:'m9',d:'1:23',desc:'필터를 밀면서 곱하고 더하는 합성곱으로 이미지 특징 찾기'},
+  {f:'인공지능이_이미지를_알아보는_방법',sec:'10.8·10.9 신경망과 AI',lab:'m8',d:'1:10',desc:'행렬 곱을 층마다 반복하는 신경망이 이미지를 알아보는 과정'}];
+  const enc=encodeURIComponent,title=f=>f.replace(/__/g,': ').replace(/_/g,' ');
+  const vtag=x=>`<video controls playsinline preload="none" poster="videos/thumbs/${enc(x.f)}.jpg" src="videos/${enc(x.f)}.mp4"></video>`;
+  $('#vgrid').innerHTML=VD.map((x,i)=>`<div class="vcard" id="vid${i+1}"><span class="vs">${x.sec}</span>${vtag(x)}<div class="vt">${i+1}. ${title(x.f)}</div><div class="vd">${x.desc} · ${x.d}</div><button class="vgo" data-lab="${x.lab}">실습하러 가기 →</button></div>`).join('');
+  $('#vgrid').addEventListener('click',e=>{const b=e.target.closest('[data-lab]');if(!b)return;location.hash=b.dataset.lab;window.scrollTo({top:0})});
+  const per={m1:[0],m2:[1],m3:[2],m4:[3],m5:[3],m6:[4],m7:[4],m8:[6],m9:[5,6]};
+  for(const id in per){const g=document.querySelector(`#${id} .goal`);if(!g)continue;const w=document.createElement('div');
+    w.innerHTML=`<p class="vin-h">▶ 먼저 영상으로 보기</p><div class="vin">${per[id].map(i=>{const x=VD[i];return `<div class="vcard">${vtag(x)}<div class="vt">${title(x.f)}</div><div class="vd">${x.d}</div></div>`}).join('')}</div>`;g.after(w)}
+})();
+
 /* ========== quizzes ========== */
 const QUIZ={m1:['A가 2×3, B가 3×4 행렬일 때 AB의 크기는? (예: 5x2)','2x4','내측 3 = 3, 결과는 외측 두 수'],
   m2:['A = [−5 3; 4 2]의 대각합 tr(A)는?','-3','대각선 성분의 합: −5 + 2'],
@@ -964,7 +988,7 @@ $$('.quiz').forEach(el=>{const[q,a,hint]=QUIZ[el.dataset.q];el.innerHTML=`<div c
   const chk=()=>{const u=parseAns(inp.value),r=parseAns(a);const good=typeof u==='number'&&typeof r==='number'?Math.abs(u-r)<1e-9:u===r;res.className='res '+(good?'ok':'no');res.textContent=good?'정답! 👍':'다시 생각해 보세요.'};
   ok.onclick=chk;inp.onkeydown=e=>{if(e.key==='Enter')chk()};hb.onclick=()=>{res.className='res';res.textContent='힌트: '+hint}});
 
-show(location.hash.slice(1)||'m1');
+show(location.hash.slice(1)||'videos');
 
 </script>
 </body>
