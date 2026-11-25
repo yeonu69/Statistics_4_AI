@@ -959,6 +959,7 @@ let getS3M=()=>PRE3.e13;
   {f:'복잡한_데이터를_한_번에_처리하는_행렬의_마법',sec:'10.1 행렬과 연산',lab:'m1',d:'1:17',desc:'표 모양의 데이터를 행렬로 묶어 덧셈·곱셈을 한 번에 처리하는 원리'},
   {f:'행렬을_뒤집는_마법,_전치행렬의_원리',sec:'10.2 특수한 행렬',lab:'m2',d:'1:42',desc:'행과 열을 바꾸는 전치행렬과 대칭행렬'},
   {f:'복잡한_행렬을_깔끔한_계단으로_깎는_법',sec:'10.3 행 연산·사다리꼴',lab:'m3',d:'1:24',desc:'기본 행 연산으로 행 사다리꼴·기약 행 사다리꼴 만들기'},
+  {f:'기약_행_사다리꼴이_얽힌_행렬을_푸는_법',sec:'10.3 기약 행 사다리꼴 · 10.7',lab:'m3',d:'1:40',desc:'가우스–조단 소거법으로 기약 행 사다리꼴을 만들어 연립방정식의 해를 바로 읽는 법'},
   {f:'행렬식의_곱셈_성질,_계산을_줄이는_마법',sec:'10.4·10.5 행렬식',lab:'m5',d:'1:16',desc:'Det(AB) = Det(A)·Det(B) 등 행렬식의 성질로 계산 줄이기'},
   {f:'역행렬이_복잡한_방정식을_푸는_원리',sec:'10.6 역행렬 · 10.7 연립방정식',lab:'m6',d:'1:25',desc:'A⁻¹을 곱해 Ax = b의 해 x = A⁻¹b를 구하는 원리'},
   {f:'인공지능이_이미지를_보는_방법__행렬의_합성곱',sec:'10.9 CNN 합성곱',lab:'m9',d:'1:23',desc:'필터를 밀면서 곱하고 더하는 합성곱으로 이미지 특징 찾기'},
@@ -967,7 +968,7 @@ let getS3M=()=>PRE3.e13;
   const vtag=x=>`<video controls playsinline preload="none" poster="videos/thumbs/${enc(x.f)}.jpg" src="videos/${enc(x.f)}.mp4"></video>`;
   $('#vgrid').innerHTML=VD.map((x,i)=>`<div class="vcard" id="vid${i+1}"><span class="vs">${x.sec}</span>${vtag(x)}<div class="vt">${i+1}. ${title(x.f)}</div><div class="vd">${x.desc} · ${x.d}</div><button class="vgo" data-lab="${x.lab}">실습하러 가기 →</button></div>`).join('');
   $('#vgrid').addEventListener('click',e=>{const b=e.target.closest('[data-lab]');if(!b)return;location.hash=b.dataset.lab;window.scrollTo({top:0})});
-  const per={m1:[0],m2:[1],m3:[2],m4:[3],m5:[3],m6:[4],m7:[4],m8:[6],m9:[5,6]};
+  const per={m1:[0],m2:[1],m3:[2,3],m4:[4],m5:[4],m6:[5],m7:[5,3],m8:[7],m9:[6,7]};
   for(const id in per){const g=document.querySelector(`#${id} .goal`);if(!g)continue;const w=document.createElement('div');
     w.innerHTML=`<p class="vin-h">▶ 먼저 영상으로 보기</p><div class="vin">${per[id].map(i=>{const x=VD[i];return `<div class="vcard">${vtag(x)}<div class="vt">${title(x.f)}</div><div class="vd">${x.d}</div></div>`}).join('')}</div>`;g.after(w)}
 })();
